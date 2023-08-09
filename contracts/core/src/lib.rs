@@ -1,18 +1,18 @@
 #![no_std]
-
-mod interface;
-mod errors;
-
 use soroban_sdk::{contract, contracttype, contractimpl, symbol_short, vec, Env, Symbol, Vec, BytesN, Address, panic_with_error};
 use soroban_sdk::auth::Context;
-use crate::errors::MultiCliqueError;
-use crate::interface::MultiCliqueTrait;
 
 mod policy_contract {
     soroban_sdk::contractimport!(file = "../../wasm/multiclique_policy.wasm");
 }
 
 use policy_contract::Client as PolicyClient;
+
+mod interface;
+mod errors;
+
+use crate::errors::MultiCliqueError;
+use crate::interface::MultiCliqueTrait;
 
 #[contracttype]
 #[derive(Clone)]
@@ -122,15 +122,15 @@ impl MultiCliqueTrait for Contract {
 
         for ctx in auth_context.iter() {
             match ctx.clone() {
-                Context::Contract(contract) => {
-                    match env.storage().instance().get(&DataKey::Policy(contract_address)) {
+                Context::Contract(contract_ctx) => {
+                    match env.storage().instance().get(&DataKey::Policy(contract_ctx.clone().contract)) {
                         Some(address) => {
                             let policy = PolicyClient::new(&env, &address);
-                            let threshold = policy.get_threshold();
+                            let threshold = policy.get_threshold(&contract_ctx.contract, &contract_ctx.fn_name, &contract_ctx.args);
                             if threshold > num_signers {
                                panic_with_error!(&env, MultiCliqueError::PolicyThresholdNotMet);
                             }
-                            policy.run_policy(ctx);
+                            policy.run_policy(&contract_ctx.contract, &contract_ctx.fn_name, &contract_ctx.args);
                         }
                         None => {
                             let default_threshold = env.storage().instance().get(&DataKey::DefaultThreshold).unwrap_or(0);
@@ -141,7 +141,7 @@ impl MultiCliqueTrait for Contract {
                     };
                 }
                 // todo: Policy for this?
-                Context::CreateContractHostFn(_) => None
+                Context::CreateContractHostFn(_) => ()
             }
         }
         Ok(())
