@@ -1,5 +1,5 @@
 #![no_std]
-use soroban_sdk::{contract, contracttype, contractimpl, symbol_short, vec, Env, Symbol, Vec, BytesN, Address, panic_with_error};
+use soroban_sdk::{contract, contracttype, contractimpl, Env, Vec, BytesN, Address, panic_with_error};
 use soroban_sdk::auth::Context;
 
 mod policy_contract {
@@ -85,7 +85,7 @@ impl MultiCliqueTrait for Contract {
         }
     }
 
-    fn detach_policy(env: Env, policy: Address, context: Vec<Address>) {
+    fn detach_policy(env: Env, context: Vec<Address>) {
         env.current_contract_address().require_auth();
         for ctx in context.iter() {
             if !env.storage().instance().has(&DataKey::Policy(ctx.clone())) {
@@ -105,12 +105,8 @@ impl MultiCliqueTrait for Contract {
         for i in 0..signed_messages.len() {
             let signature = signed_messages.get_unchecked(i);
             // todo: In CustomAccount there is a prevSig check here, investigate / ask why
-            if !env
-                .storage()
-                .instance()
-                .has(&DataKey::Signer(signature.public_key.clone()))
-            {
-                return panic_with_error!(&env, MultiCliqueError::UnknownSigner);
+            if !env.storage().instance().has(&DataKey::Signer(signature.public_key.clone())) {
+                panic_with_error!(&env, MultiCliqueError::UnknownSigner);
             }
             env.crypto().ed25519_verify(
                 &signature.public_key,

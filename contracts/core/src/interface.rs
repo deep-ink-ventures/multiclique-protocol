@@ -1,6 +1,6 @@
-use soroban_sdk::{Address, Bytes, BytesN, Env, Vec};
+use soroban_sdk::{Address, BytesN, Env, Vec};
 use soroban_sdk::auth::Context;
-use crate::{DataKey, SignedMessage};
+use crate::SignedMessage;
 use crate::errors::MultiCliqueError;
 
 pub trait MultiCliqueTrait {
@@ -17,7 +17,7 @@ pub trait MultiCliqueTrait {
 
     fn attach_policy(env: Env, policy: Address, context: Vec<Address>);
 
-    fn detach_policy(env: Env, policy: Address, context: Vec<Address>);
+    fn detach_policy(env: Env, context: Vec<Address>);
 
     #[allow(non_snake_case)]
     fn __check_auth(
