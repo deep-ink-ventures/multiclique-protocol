@@ -7,9 +7,9 @@ pub trait MultiCliqueTrait {
 
     fn init(env: Env, signers: Vec<BytesN<32>>, default_threshold: u32);
 
-    fn add_signers(env: Env, signers: Vec<BytesN<32>>);
+    fn add_signer(env: Env, signer: BytesN<32>);
 
-    fn remove_signers(env: Env, signers: Vec<BytesN<32>>);
+    fn remove_signer(env: Env, signer: BytesN<32>);
 
     fn set_default_threshold(env: Env, threshold: u32);
 

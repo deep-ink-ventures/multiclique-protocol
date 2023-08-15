@@ -48,18 +48,14 @@ impl MultiCliqueTrait for Contract {
         env.storage().instance().bump(BUMP_A_YEAR);
     }
 
-    fn add_signers(env: Env, signers: Vec<BytesN<32>>) {
+    fn add_signer(env: Env, signer: BytesN<32>) {
         env.current_contract_address().require_auth();
-        for signer in signers.iter() {
-            env.storage().instance().set(&DataKey::Signer(signer), &());
-        }
+        env.storage().instance().set(&DataKey::Signer(signer), &());
     }
 
-    fn remove_signers(env: Env, signers: Vec<BytesN<32>>) {
+    fn remove_signer(env: Env, signer: BytesN<32>) {
         env.current_contract_address().require_auth();
-        for signer in signers.iter() {
-            env.storage().instance().remove(&DataKey::Signer(signer));
-        }
+        env.storage().instance().remove(&DataKey::Signer(signer));
     }
 
     fn set_default_threshold(env: Env, threshold: u32) {
