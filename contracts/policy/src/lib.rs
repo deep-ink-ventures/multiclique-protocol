@@ -1,7 +1,6 @@
 #![no_std]
-use soroban_sdk::{contract, contractimpl, Env, Symbol, Vec, Address, Val};
+use soroban_sdk::{contract, contractimpl, Address, Env, Symbol, Val, Vec};
 mod interface;
-
 
 use crate::interface::MultiCliquePolicy;
 
@@ -16,8 +15,5 @@ impl MultiCliquePolicy for Contract {
         2
     }
 
-    fn run_policy(env: Env, address: Address, fn_name: Symbol, args: Vec<Val>) {
-
-    }
+    fn run_policy(env: Env, address: Address, fn_name: Symbol, args: Vec<Val>) {}
 }
-

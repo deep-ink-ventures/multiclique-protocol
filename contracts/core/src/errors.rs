@@ -8,5 +8,5 @@ pub enum MultiCliqueError {
     ContractPolicyDoesNotExist = 1,
     UnknownSigner = 3,
     DefaultThresholdNotMet = 4,
-    PolicyThresholdNotMet = 5
+    PolicyThresholdNotMet = 5,
 }

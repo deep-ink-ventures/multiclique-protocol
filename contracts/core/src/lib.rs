@@ -1,6 +1,8 @@
 #![no_std]
-use soroban_sdk::{contract, contracttype, contractimpl, Env, Vec, BytesN, Address, panic_with_error};
 use soroban_sdk::auth::Context;
+use soroban_sdk::{
+    contract, contractimpl, contracttype, panic_with_error, Address, BytesN, Env, Vec,
+};
 
 mod policy_contract {
     soroban_sdk::contractimport!(file = "../../wasm/multiclique_policy.wasm");
@@ -8,8 +10,8 @@ mod policy_contract {
 
 use policy_contract::Client as PolicyClient;
 
-mod interface;
 mod errors;
+mod interface;
 
 use crate::errors::MultiCliqueError;
 use crate::interface::MultiCliqueTrait;
@@ -68,7 +70,8 @@ impl MultiCliqueTrait for Contract {
     fn get_default_threshold(env: Env) -> u32 {
         env.storage()
             .instance()
-            .get(&DataKey::DefaultThreshold).unwrap_or(0)
+            .get(&DataKey::DefaultThreshold)
+            .unwrap_or(0)
     }
 
     fn attach_policy(env: Env, policy: Address, context: Vec<Address>) {
@@ -101,7 +104,11 @@ impl MultiCliqueTrait for Contract {
         for i in 0..signed_messages.len() {
             let signature = signed_messages.get_unchecked(i);
             // todo: In CustomAccount there is a prevSig check here, investigate / ask why
-            if !env.storage().instance().has(&DataKey::Signer(signature.public_key.clone())) {
+            if !env
+                .storage()
+                .instance()
+                .has(&DataKey::Signer(signature.public_key.clone()))
+            {
                 panic_with_error!(&env, MultiCliqueError::UnknownSigner);
             }
             env.crypto().ed25519_verify(
@@ -115,17 +122,33 @@ impl MultiCliqueTrait for Contract {
         for ctx in auth_context.iter() {
             match ctx.clone() {
                 Context::Contract(contract_ctx) => {
-                    match env.storage().instance().get(&DataKey::Policy(contract_ctx.clone().contract)) {
+                    match env
+                        .storage()
+                        .instance()
+                        .get(&DataKey::Policy(contract_ctx.clone().contract))
+                    {
                         Some(address) => {
                             let policy = PolicyClient::new(&env, &address);
-                            let threshold = policy.get_threshold(&contract_ctx.contract, &contract_ctx.fn_name, &contract_ctx.args);
+                            let threshold = policy.get_threshold(
+                                &contract_ctx.contract,
+                                &contract_ctx.fn_name,
+                                &contract_ctx.args,
+                            );
                             if threshold > num_signers {
-                               panic_with_error!(&env, MultiCliqueError::PolicyThresholdNotMet);
+                                panic_with_error!(&env, MultiCliqueError::PolicyThresholdNotMet);
                             }
-                            policy.run_policy(&contract_ctx.contract, &contract_ctx.fn_name, &contract_ctx.args);
+                            policy.run_policy(
+                                &contract_ctx.contract,
+                                &contract_ctx.fn_name,
+                                &contract_ctx.args,
+                            );
                         }
                         None => {
-                            let default_threshold = env.storage().instance().get(&DataKey::DefaultThreshold).unwrap_or(0);
+                            let default_threshold = env
+                                .storage()
+                                .instance()
+                                .get(&DataKey::DefaultThreshold)
+                                .unwrap_or(0);
                             if default_threshold > num_signers {
                                 panic_with_error!(&env, MultiCliqueError::DefaultThresholdNotMet);
                             }
@@ -133,10 +156,9 @@ impl MultiCliqueTrait for Contract {
                     };
                 }
                 // todo: Policy for this?
-                Context::CreateContractHostFn(_) => ()
+                Context::CreateContractHostFn(_) => (),
             }
         }
         Ok(())
     }
 }
-
