@@ -1,4 +1,6 @@
 #![no_std]
+extern crate alloc;
+
 use soroban_sdk::auth::Context;
 use soroban_sdk::{
     contract, contractimpl, contracttype, panic_with_error, Address, BytesN, Env, Vec,
@@ -12,6 +14,9 @@ use policy_contract::Client as PolicyClient;
 
 mod errors;
 mod interface;
+
+#[cfg(test)]
+mod tests;
 
 use crate::errors::MultiCliqueError;
 use crate::interface::MultiCliqueTrait;
