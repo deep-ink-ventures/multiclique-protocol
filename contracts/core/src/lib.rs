@@ -65,12 +65,10 @@ impl MultiCliqueTrait for Contract {
         env.current_contract_address().require_auth();
         let mut signers: Vec<BytesN<32>> = env.storage().instance().get(&DataKey::Signers).unwrap();
 
-        let index = signers.first_index_of(&signer);
-
-        match index {
+        match signers.first_index_of(&signer) {
             None => panic_with_error!(&env, MultiCliqueError::SignerDoesNotExist),
-            Some(actual) => {
-                signers.remove(actual);
+            Some(index) => {
+                signers.remove(index);
             }
         }
         env.storage().instance().set(&DataKey::Signers, &signers);
