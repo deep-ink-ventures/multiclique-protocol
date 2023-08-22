@@ -3,7 +3,8 @@
 use ed25519_dalek::Keypair;
 use hex::decode;
 
-use soroban_sdk::testutils::Address as _;
+use soroban_sdk::arbitrary::std::println;
+use soroban_sdk::testutils::{Address as _, Events as _};
 use soroban_sdk::{vec, Address, BytesN, Env, IntoVal, Vec};
 
 use crate::{Contract, ContractClient};
@@ -63,31 +64,34 @@ fn test_default_threshold() {
 
 #[test]
 fn test_add_signer() {
-    let Protocol { client, .. } = Protocol::new();
+    let Protocol { client, env, .. } = Protocol::new();
     assert_eq!(client.get_signers().len(), 2);
     let pair = Keypair::from_bytes(&decode(EVE_SECRET).unwrap()).unwrap();
     let key = pair.public.to_bytes().into_val(&client.env);
     client.add_signer(&key);
     assert_eq!(client.get_signers().len(), 3);
+    assert_eq!(env.events().all().len(), 1);
 }
 
 #[test]
 fn test_remove_signer() {
-    let Protocol { client, .. } = Protocol::new();
+    let Protocol { client, env, .. } = Protocol::new();
     assert_eq!(client.get_signers().len(), 2);
     let pair = Keypair::from_bytes(&decode(ALICE_SECRET).unwrap()).unwrap();
     let key = pair.public.to_bytes().into_val(&client.env);
     client.remove_signer(&key);
     assert_eq!(client.get_signers().len(), 1);
+    assert_eq!(env.events().all().len(), 1);
 }
 
 #[test]
 #[should_panic(expected = "#6")]
 fn test_remove_signer_fails_if_not_exists() {
-    let Protocol { client, .. } = Protocol::new();
+    let Protocol { client, env, .. } = Protocol::new();
     let pair = Keypair::from_bytes(&decode(EVE_SECRET).unwrap()).unwrap();
     let key = pair.public.to_bytes().into_val(&client.env);
     client.remove_signer(&key);
+    assert_eq!(env.events().all().len(), 1);
 }
 
 #[test]
@@ -98,6 +102,7 @@ fn test_attach_policy() {
     assert_eq!(client.get_policies(&context).len(), 0);
     client.attach_policy(&policy, &context);
     assert_eq!(client.get_policies(&context).len(), 1);
+    assert_eq!(env.events().all().len(), 1);
 }
 
 #[test]
@@ -121,11 +126,12 @@ fn test_detach_policy() {
     assert_eq!(client.get_policies(&context).len(), 1);
     client.detach_policy(&context);
     assert_eq!(client.get_policies(&context).len(), 0);
+    assert_eq!(env.events().all().len(), 2);
 }
 
 #[test]
 #[should_panic(expected = "#1")]
-fn test_detach_policy_fails_it_not_exists() {
+fn test_detach_policy_fails_if_not_exists() {
     let Protocol { client, env, .. } = Protocol::new();
     let context = vec![&env, Address::random(&env)];
     client.detach_policy(&context);

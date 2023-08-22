@@ -13,12 +13,17 @@ mod policy_contract {
 use policy_contract::Client as PolicyClient;
 
 mod errors;
+mod events;
 mod interface;
 
 #[cfg(test)]
 mod test;
 
 use crate::errors::MultiCliqueError;
+use crate::events::{
+    DefaultThresholdChangedEventData, PolicyAddedEventData, PolicyRemovedEventData,
+    SignerAddedEventData, SignerRemovedEventData, ADDED, CHANGED, GOV, POLICY, REMOVED, SIGNER,
+};
 use crate::interface::MultiCliqueTrait;
 
 #[contracttype]
@@ -59,6 +64,8 @@ impl MultiCliqueTrait for Contract {
 
         signers.push_back(signer.clone());
         env.storage().instance().set(&DataKey::Signers, &signers);
+        env.events()
+            .publish((SIGNER, ADDED), SignerAddedEventData { signer });
     }
 
     fn remove_signer(env: Env, signer: BytesN<32>) {
@@ -67,11 +74,12 @@ impl MultiCliqueTrait for Contract {
 
         match signers.first_index_of(&signer) {
             None => panic_with_error!(&env, MultiCliqueError::SignerDoesNotExist),
-            Some(index) => {
-                signers.remove(index);
-            }
-        }
+            Some(index) => signers.remove(index),
+        };
+
         env.storage().instance().set(&DataKey::Signers, &signers);
+        env.events()
+            .publish((SIGNER, REMOVED), SignerRemovedEventData { signer });
     }
 
     fn get_signers(env: Env) -> Vec<BytesN<32>> {
@@ -83,6 +91,10 @@ impl MultiCliqueTrait for Contract {
         env.storage()
             .instance()
             .set(&DataKey::DefaultThreshold, &threshold);
+        env.events().publish(
+            (GOV, CHANGED),
+            DefaultThresholdChangedEventData { threshold },
+        );
     }
 
     fn get_default_threshold(env: Env) -> u32 {
@@ -100,6 +112,8 @@ impl MultiCliqueTrait for Contract {
             }
             env.storage().instance().set(&DataKey::Policy(ctx), &policy);
         }
+        env.events()
+            .publish((POLICY, ADDED), PolicyAddedEventData { policy, context });
     }
 
     fn detach_policy(env: Env, context: Vec<Address>) {
@@ -110,6 +124,8 @@ impl MultiCliqueTrait for Contract {
             }
             env.storage().instance().remove(&DataKey::Policy(ctx));
         }
+        env.events()
+            .publish((POLICY, REMOVED), PolicyRemovedEventData { context });
     }
 
     fn get_policies(env: Env, context: Vec<Address>) -> Vec<Address> {
