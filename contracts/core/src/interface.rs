@@ -10,6 +10,8 @@ pub trait MultiCliqueTrait {
 
     fn remove_signer(env: Env, signer: BytesN<32>);
 
+    fn get_signers(env: Env) -> Vec<BytesN<32>>;
+
     fn set_default_threshold(env: Env, threshold: u32);
 
     fn get_default_threshold(env: Env) -> u32;
@@ -17,6 +19,8 @@ pub trait MultiCliqueTrait {
     fn attach_policy(env: Env, policy: Address, context: Vec<Address>);
 
     fn detach_policy(env: Env, context: Vec<Address>);
+
+    fn get_policies(env: Env, context: Vec<Address>) -> Vec<Address>;
 
     #[allow(non_snake_case)]
     fn __check_auth(

@@ -16,7 +16,7 @@ mod errors;
 mod interface;
 
 #[cfg(test)]
-mod tests;
+mod test;
 
 use crate::errors::MultiCliqueError;
 use crate::interface::MultiCliqueTrait;
@@ -32,6 +32,7 @@ pub struct SignedMessage {
 #[derive(Clone)]
 enum DataKey {
     DefaultThreshold,
+    Signers,
     Signer(BytesN<32>),
     SpendLimit(Address),
     Policy(Address),
@@ -45,9 +46,7 @@ pub struct Contract;
 #[contractimpl]
 impl MultiCliqueTrait for Contract {
     fn init(env: Env, signers: Vec<BytesN<32>>, default_threshold: u32) {
-        for signer in signers.iter() {
-            env.storage().instance().set(&DataKey::Signer(signer), &());
-        }
+        env.storage().instance().set(&DataKey::Signers, &signers);
         env.storage()
             .instance()
             .set(&DataKey::DefaultThreshold, &default_threshold);
@@ -57,12 +56,29 @@ impl MultiCliqueTrait for Contract {
 
     fn add_signer(env: Env, signer: BytesN<32>) {
         env.current_contract_address().require_auth();
-        env.storage().instance().set(&DataKey::Signer(signer), &());
+        let mut signers: Vec<BytesN<32>> = env.storage().instance().get(&DataKey::Signers).unwrap();
+
+        signers.push_back(signer.clone());
+        env.storage().instance().set(&DataKey::Signers, &signers);
     }
 
     fn remove_signer(env: Env, signer: BytesN<32>) {
         env.current_contract_address().require_auth();
-        env.storage().instance().remove(&DataKey::Signer(signer));
+        let mut signers: Vec<BytesN<32>> = env.storage().instance().get(&DataKey::Signers).unwrap();
+
+        let index = signers.first_index_of(&signer);
+
+        match index {
+            None => panic_with_error!(&env, MultiCliqueError::SignerDoesNotExist),
+            Some(actual) => {
+                signers.remove(actual).unwrap();
+            }
+        }
+        env.storage().instance().set(&DataKey::Signers, &signers);
+    }
+
+    fn get_signers(env: Env) -> Vec<BytesN<32>> {
+        env.storage().instance().get(&DataKey::Signers).unwrap()
     }
 
     fn set_default_threshold(env: Env, threshold: u32) {
@@ -97,6 +113,22 @@ impl MultiCliqueTrait for Contract {
             }
             env.storage().instance().remove(&DataKey::Policy(ctx));
         }
+    }
+
+    fn get_policies(env: Env, context: Vec<Address>) -> Vec<Address> {
+        let mut policies = Vec::new(&env);
+        for ctx in context.iter() {
+            if env.storage().instance().has(&DataKey::Policy(ctx.clone())) {
+                policies.push_back(
+                    env.storage()
+                        .instance()
+                        .get(&DataKey::Policy(ctx.clone()))
+                        .unwrap(),
+                );
+            }
+        }
+
+        return policies;
     }
 
     #[allow(non_snake_case)]
