@@ -9,4 +9,5 @@ pub enum MultiCliqueError {
     UnknownSigner = 3,
     DefaultThresholdNotMet = 4,
     PolicyThresholdNotMet = 5,
+    SignerDoesNotExist = 6,
 }
