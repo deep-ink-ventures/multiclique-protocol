@@ -3,9 +3,10 @@
 use ed25519_dalek::Keypair;
 use hex::decode;
 
-use soroban_sdk::arbitrary::std::println;
 use soroban_sdk::testutils::{Address as _, Events as _};
-use soroban_sdk::{vec, Address, BytesN, Env, IntoVal, Vec};
+use soroban_sdk::{vec, Address, BytesN, Env, IntoVal, Vec, Symbol, Val, token, contract, contractimpl};
+use multiclique_policy::interface::MultiCliquePolicy;
+use crate::policy_contract::Client as PolicyClient;
 
 use crate::{Contract, ContractClient};
 
@@ -13,7 +14,22 @@ const ALICE_SECRET: &str = "be2161a67ad224bc3fc4237c30d8bf0ddbab03c0bcb9d186096d
 const BOB_SECRET: &str = "2a4a6cf377240d0aad16513dce93b67cd356ca79ef509e80b6e71cbd569d499a8e5b4ee27e0c55a3facaa102c2a2211171a423afbbea89f68f688de5d52b2863";
 const EVE_SECRET: &str = "9ecd51618af6af2e1bbf600e5293546809d67f241afd476cc8fbb83c1a964b0b2658f2d0b1cc3a8925e519a834fd45fc366a68a98195262952241f583a695644";
 
+#[contract]
+pub struct TestPolicy;
+
+
+#[contractimpl]
+impl MultiCliquePolicy for TestPolicy {
+    fn get_threshold(env: Env, address: Address, fn_name: Symbol, args: Vec<Val>) -> u32 {
+        2
+    }
+
+    fn run_policy(env: Env, address: Address, fn_name: Symbol, args: Vec<Val>) {}
+}
+
+
 struct Protocol {
+    protocol_address: Address,
     env: Env,
     client: ContractClient<'static>,
     signers: Vec<BytesN<32>>,
@@ -50,8 +66,33 @@ impl Protocol {
             client,
             signers,
             threshold,
+            protocol_address: contract_id
         }
     }
+
+    fn create_policy(&self) -> PolicyClient {
+        let native_asset = self.create_native_asset();
+        let address = self.env.register_contract(None, TestPolicy);
+        self.client.attach_policy(&address, &vec![&native_asset.address()]);
+        PolicyClient::new(&self.env, &address)
+
+    }
+
+    fn create_native_asset(&self) -> token::Client {
+        let native_asset_id = self.env.register_stellar_asset_contract(Address::random(&self.env));
+        let native_asset_admin = token::AdminClient::new(&self.env, &native_asset_id);
+
+        native_asset_admin.mint(&self.protocol_address, &1000_i128);
+        token::Client::new(&self.env, &native_asset_id)
+    }
+}
+
+#[test]
+fn run_policy() {
+    let protocol = Protocol::new();
+    let policy = protocol.create_policy();
+
+
 }
 
 #[test]

@@ -1,8 +1,8 @@
 #![no_std]
 use soroban_sdk::{contract, contractimpl, Address, Env, Symbol, Val, Vec};
-mod interface;
-
 use crate::interface::MultiCliquePolicy;
+
+pub mod interface;
 
 pub const BUMP_A_YEAR: u32 = 6312000;
 
