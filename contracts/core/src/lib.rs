@@ -1,6 +1,4 @@
 #![no_std]
-extern crate alloc;
-
 use soroban_sdk::auth::Context;
 use soroban_sdk::{
     contract, contractimpl, contracttype, panic_with_error, Address, BytesN, Env, Vec,

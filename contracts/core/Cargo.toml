@@ -13,7 +13,6 @@ testutils = ["soroban-sdk/testutils"]
 soroban-sdk = { workspace = true }
 
 [dev_dependencies]
-#multiclique-policy = { path = "../policy"}
 soroban-sdk = { workspace = true, features = ["testutils"] }
 ed25519-dalek = { version = "1.0.1" }
 rand = { version = "0.7.3" }
