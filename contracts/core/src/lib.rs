@@ -1,16 +1,20 @@
 #![no_std]
 use soroban_sdk::auth::Context;
-use soroban_sdk::{
-    contract, contractimpl, contracttype, panic_with_error, Address, BytesN, Env, Vec,
-};
+use soroban_sdk::{contract, contractimpl, contracttype, panic_with_error, Address, BytesN, Env, Vec, Symbol, Val};
+use commons::traits::MultiCliquePolicyTrait;
 
 mod errors;
-mod interface;
+mod events;
+pub mod interface;
 
 #[cfg(test)]
 mod test;
 
 use crate::errors::MultiCliqueError;
+use crate::events::{
+    DefaultThresholdChangedEventData, PolicyAddedEventData, PolicyRemovedEventData,
+    SignerAddedEventData, SignerRemovedEventData, ADDED, CHANGED, GOV, POLICY, REMOVED, SIGNER,
+};
 use crate::interface::MultiCliqueTrait;
 
 #[contracttype]
@@ -51,21 +55,22 @@ impl MultiCliqueTrait for Contract {
 
         signers.push_back(signer.clone());
         env.storage().instance().set(&DataKey::Signers, &signers);
+        env.events()
+            .publish((SIGNER, ADDED), SignerAddedEventData { signer });
     }
 
     fn remove_signer(env: Env, signer: BytesN<32>) {
         env.current_contract_address().require_auth();
         let mut signers: Vec<BytesN<32>> = env.storage().instance().get(&DataKey::Signers).unwrap();
 
-        let index = signers.first_index_of(&signer);
-
-        match index {
+        match signers.first_index_of(&signer) {
             None => panic_with_error!(&env, MultiCliqueError::SignerDoesNotExist),
-            Some(actual) => {
-                signers.remove(actual);
-            }
-        }
+            Some(index) => signers.remove(index),
+        };
+
         env.storage().instance().set(&DataKey::Signers, &signers);
+        env.events()
+            .publish((SIGNER, REMOVED), SignerRemovedEventData { signer });
     }
 
     fn get_signers(env: Env) -> Vec<BytesN<32>> {
@@ -77,6 +82,10 @@ impl MultiCliqueTrait for Contract {
         env.storage()
             .instance()
             .set(&DataKey::DefaultThreshold, &threshold);
+        env.events().publish(
+            (GOV, CHANGED),
+            DefaultThresholdChangedEventData { threshold },
+        );
     }
 
     fn get_default_threshold(env: Env) -> u32 {
@@ -94,6 +103,8 @@ impl MultiCliqueTrait for Contract {
             }
             env.storage().instance().set(&DataKey::Policy(ctx), &policy);
         }
+        env.events()
+            .publish((POLICY, ADDED), PolicyAddedEventData { policy, context });
     }
 
     fn detach_policy(env: Env, context: Vec<Address>) {
@@ -104,6 +115,8 @@ impl MultiCliqueTrait for Contract {
             }
             env.storage().instance().remove(&DataKey::Policy(ctx));
         }
+        env.events()
+            .publish((POLICY, REMOVED), PolicyRemovedEventData { context });
     }
 
     fn get_policies(env: Env, context: Vec<Address>) -> Vec<Address> {
@@ -187,5 +200,19 @@ impl MultiCliqueTrait for Contract {
             }
         }
         Ok(())
+    }
+}
+
+#[contract]
+struct Policy;
+
+#[contractimpl]
+impl MultiCliquePolicyTrait for Policy {
+    fn get_threshold(_env: Env, _address: Address, _fn_name: Symbol, _args: Vec<Val>) -> u32 {
+        return 1;
+    }
+
+    fn run_policy(_env: Env, _address: Address, _fn_name: Symbol, _args: Vec<Val>) {
+        // do nothing
     }
 }
