@@ -1,16 +1,8 @@
 #![no_std]
-extern crate alloc;
-
 use soroban_sdk::auth::Context;
 use soroban_sdk::{
     contract, contractimpl, contracttype, panic_with_error, Address, BytesN, Env, Vec,
 };
-
-mod policy_contract {
-    soroban_sdk::contractimport!(file = "../../wasm/multiclique_policy.wasm");
-}
-
-use policy_contract::Client as PolicyClient;
 
 mod errors;
 mod interface;

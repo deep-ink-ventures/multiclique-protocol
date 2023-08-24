@@ -1,6 +1,6 @@
 [package]
-name = "multiclique-policy"
-version = "0.1.0"
+name = "elio-dao-policy"
+version = "1.0.0"
 edition = "2021"
 
 [lib]
@@ -11,6 +11,7 @@ testutils = ["soroban-sdk/testutils"]
 
 [dependencies]
 soroban-sdk = { workspace = true }
+multiclique-core = { path = "../../core" }
 
 [dev_dependencies]
 soroban-sdk = { workspace = true, features = ["testutils"] }

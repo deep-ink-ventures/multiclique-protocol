@@ -1,5 +1,8 @@
 [workspace]
-members = ["contracts/*"]
+members = [
+    "contracts/core",
+    "contracts/policies/elio-dao",
+]
 resolver = "2"
 
 [workspace.dependencies]

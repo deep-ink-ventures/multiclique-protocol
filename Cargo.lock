@@ -375,6 +375,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a26ae43d7bcc3b814de94796a5e736d4029efb0ee900c12e2d54c993ad1a1e07"
 
 [[package]]
+name = "elio-dao-policy"
+version = "1.0.0"
+dependencies = [
+ "ed25519-dalek",
+ "multiclique-core",
+ "rand",
+ "soroban-sdk",
+]
+
+[[package]]
 name = "elliptic-curve"
 version = "0.13.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -652,15 +662,6 @@ version = "0.1.0"
 dependencies = [
  "ed25519-dalek",
  "hex",
- "rand",
- "soroban-sdk",
-]
-
-[[package]]
-name = "multiclique-policy"
-version = "0.1.0"
-dependencies = [
- "ed25519-dalek",
  "rand",
  "soroban-sdk",
 ]
