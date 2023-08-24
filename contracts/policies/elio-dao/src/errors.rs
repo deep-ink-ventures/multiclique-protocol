@@ -5,4 +5,5 @@ use soroban_sdk::contracterror;
 #[repr(u32)]
 pub enum PolicyError {
     AlreadyInitialized = 0,
+    SpendLimitExceeded = 1
 }
