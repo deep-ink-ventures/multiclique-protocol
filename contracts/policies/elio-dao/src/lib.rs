@@ -2,7 +2,7 @@
 
 mod errors;
 
-use soroban_sdk::{contract, contractimpl, Address, Env, Symbol, TryFromVal, Val, Vec, BytesN, contracttype, panic_with_error};
+use soroban_sdk::{contract, contractimpl, Address, Env, Symbol, TryIntoVal, Val, Vec, BytesN, contracttype, panic_with_error};
 use commons::traits::MultiCliquePolicyTrait;
 #[contract]
 pub struct Contract;
@@ -103,7 +103,7 @@ fn run_asset_policy(env: &Env, num_signers: &u32, address: Address, signers: &Ve
     if is_xfer || is_incr_allowance {
         let from: Address = args.get(0).unwrap().try_into_val(env)
             .unwrap();
-        let amount: i128 = args.get(2).unwrap().try_into_val().unwrap();
+        let amount: i128 = args.get(2).unwrap().try_into_val(env).unwrap();
 
         if from == contract_address {
             let spend_limit = env.storage().instance().get(&DataKey::SpendLimit(address.clone())).unwrap_or(0_128);
