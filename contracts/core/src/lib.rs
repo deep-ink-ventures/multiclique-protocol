@@ -142,10 +142,10 @@ impl MultiCliqueTrait for Contract {
         signed_messages: Vec<SignedMessage>,
         auth_context: Vec<Context>,
     ) -> Result<(), MultiCliqueError> {
+        let signers: Vec<BytesN<32>> = env.storage().instance().get(&DataKey::Signers).unwrap();
         for i in 0..signed_messages.len() {
             let signature = signed_messages.get_unchecked(i);
             // todo: In CustomAccount there is a prevSig check here, investigate / ask why
-            let signers: Vec<BytesN<32>> = env.storage().instance().get(&DataKey::Signers).unwrap();
 
             if signers.first_index_of(&signature.public_key).is_none() {
                 panic_with_error!(&env, MultiCliqueError::UnknownSigner);
@@ -170,6 +170,8 @@ impl MultiCliqueTrait for Contract {
                         Some(address) => {
                             let policy = PolicyClient::new(&env, &address);
                             let threshold = policy.get_threshold(
+                                &num_signers,
+                                &signers,
                                 &contract_ctx.contract,
                                 &contract_ctx.fn_name,
                                 &contract_ctx.args,
@@ -178,6 +180,8 @@ impl MultiCliqueTrait for Contract {
                                 panic_with_error!(&env, MultiCliqueError::PolicyThresholdNotMet);
                             }
                             policy.run_policy(
+                                &num_signers,
+                                &signers,
                                 &contract_ctx.contract,
                                 &contract_ctx.fn_name,
                                 &contract_ctx.args,
@@ -208,11 +212,11 @@ struct Policy;
 
 #[contractimpl]
 impl MultiCliquePolicyTrait for Policy {
-    fn get_threshold(_env: Env, _address: Address, _fn_name: Symbol, _args: Vec<Val>) -> u32 {
-        return 1;
+    fn get_threshold(_env: Env, num_signers: u32, _signers: Vec<BytesN<32>>, _address: Address, _fn_name: Symbol, _args: Vec<Val>) -> u32 {
+        num_signers
     }
 
-    fn run_policy(_env: Env, _address: Address, _fn_name: Symbol, _args: Vec<Val>) {
+    fn run_policy(_env: Env, _num_signers: u32, _signers: Vec<BytesN<32>>, _address: Address, _fn_name: Symbol, _args: Vec<Val>) {
         // do nothing
     }
 }
