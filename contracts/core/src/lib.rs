@@ -17,6 +17,7 @@ use crate::events::{
 };
 use crate::interface::MultiCliqueTrait;
 
+/// Declares the SignedMessage structure, containing the public key and signature.
 #[contracttype]
 #[derive(Clone)]
 pub struct SignedMessage {
@@ -24,6 +25,7 @@ pub struct SignedMessage {
     pub signature: BytesN<64>,
 }
 
+/// Enum to represent different keys used in storage for the contract.
 #[contracttype]
 #[derive(Clone)]
 enum DataKey {
@@ -38,6 +40,7 @@ pub const BUMP_A_YEAR: u32 = 6312000;
 #[contract]
 pub struct Contract;
 
+/// see `MultiCliqueTrait` for documentation
 #[contractimpl]
 impl MultiCliqueTrait for Contract {
     fn init(env: Env, signers: Vec<BytesN<32>>, default_threshold: u32) {
@@ -210,6 +213,7 @@ impl MultiCliqueTrait for Contract {
 #[contract]
 struct Policy;
 
+/// see `MultiCliquePolicyTrait` for documentation
 #[contractimpl]
 impl MultiCliquePolicyTrait for Policy {
     fn get_threshold(_env: Env, num_signers: u32, _signers: Vec<BytesN<32>>, _address: Address, _fn_name: Symbol, _args: Vec<Val>) -> u32 {
