@@ -15,7 +15,7 @@ MultiClique is a flexible policy framework and multisig wallet designed for the 
 - **User-Friendly Interface**: Provides an intuitive interface for managing digital assets and interacting with Soroban.
 - **Council Management Support**: Ideal for DAOs and other organizational groups requiring advanced workflows.
 - **Policy Extensibility**: The core policy can be extended through hook points, making the policy system adaptable.
-- **Soroban Integration**: CustomAccount Protocol employing Soroban’s __check_auth mechanism for member management and signing thresholds.
+- **Soroban Integration**: CustomAccount Protocol employing Soroban’s `__check_auth` mechanism for member management and signing thresholds.
 
 ## Motivation
 
