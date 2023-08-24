@@ -1,5 +1,5 @@
 [package]
-name = "multiclique-core"
+name = "multiclique"
 version = "0.1.0"
 edition = "2021"
 
@@ -11,6 +11,7 @@ testutils = ["soroban-sdk/testutils"]
 
 [dependencies]
 soroban-sdk = { workspace = true }
+commons = { workspace = true}
 
 [dev_dependencies]
 soroban-sdk = { workspace = true, features = ["testutils"] }

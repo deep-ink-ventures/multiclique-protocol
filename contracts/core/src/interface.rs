@@ -1,7 +1,7 @@
 use crate::errors::MultiCliqueError;
 use crate::SignedMessage;
 use soroban_sdk::auth::Context;
-use soroban_sdk::{Address, BytesN, Env, Symbol, Val, Vec};
+use soroban_sdk::{Address, BytesN, Env, Vec};
 
 pub trait MultiCliqueTrait {
     fn init(env: Env, signers: Vec<BytesN<32>>, default_threshold: u32);
@@ -29,10 +29,4 @@ pub trait MultiCliqueTrait {
         signatures: Vec<SignedMessage>,
         auth_context: Vec<Context>,
     ) -> Result<(), MultiCliqueError>;
-}
-
-pub trait MultiCliquePolicy {
-    fn get_threshold(env: Env, address: Address, fn_name: Symbol, args: Vec<Val>) -> u32;
-
-    fn run_policy(env: Env, address: Address, fn_name: Symbol, args: Vec<Val>);
 }

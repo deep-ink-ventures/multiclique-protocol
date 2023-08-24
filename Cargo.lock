@@ -163,6 +163,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "commons"
+version = "1.0.0"
+dependencies = [
+ "soroban-sdk",
+]
+
+[[package]]
 name = "const-oid"
 version = "0.9.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -378,8 +385,8 @@ checksum = "a26ae43d7bcc3b814de94796a5e736d4029efb0ee900c12e2d54c993ad1a1e07"
 name = "elio-dao-policy"
 version = "1.0.0"
 dependencies = [
+ "commons",
  "ed25519-dalek",
- "multiclique-core",
  "rand",
  "soroban-sdk",
 ]
@@ -657,9 +664,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "multiclique-core"
+name = "multiclique"
 version = "0.1.0"
 dependencies = [
+ "commons",
  "ed25519-dalek",
  "hex",
  "rand",
