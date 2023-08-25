@@ -1,7 +1,7 @@
 use soroban_sdk::contracterror;
 
 #[contracterror]
-#[derive(E
+#[derive(Eq, PartialEq, Copy, Clone, Debug)]
 #[repr(u32)]
 pub enum PolicyError {
     /// Error when the contract is already initialized.

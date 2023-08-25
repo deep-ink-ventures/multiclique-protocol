@@ -1,6 +1,11 @@
 #![no_std]
 
+extern crate alloc;
+
 mod errors;
+
+#[cfg(test)]
+mod test;
 
 use soroban_sdk::{contract, contractimpl, Address, Env, Symbol, TryIntoVal, Val, Vec, BytesN, contracttype, panic_with_error};
 use commons::traits::MultiCliquePolicyTrait;
@@ -25,6 +30,60 @@ enum DataKey {
     Asset,
     SpendLimit(Address),
     AlreadySpend(Address)
+}
+
+trait ElioDaoPolicyTrait {
+   fn init(env: Env, multiclique_address: Address, core_address: Address, votes_address: Address, asset_address: Address);
+   fn set_spend_limit(env: Env, address: Address, limit: i128);
+   fn reset_spend_limit(env: Env, address: Address);
+}
+
+
+#[contractimpl]
+impl ElioDaoPolicyTrait for Contract {
+
+    /// ## Init
+    /// Initializes the contract by setting the addresses for MultiClique, Core, Votes, and Asset.
+    ///
+    /// - `env`: Environment context.
+    /// - `multiclique_address`: Address of the MultiClique protocol
+    /// - `core_address`: Address of the Elio DAO Core contract.
+    /// - `votes_address`: Address of the Elio DAO Votes contract.
+    /// - `asset_address`: Address of the Elio DAO Asset contract.
+    fn init(env: Env, multiclique_address: Address, core_address: Address, votes_address: Address, asset_address: Address) {
+        if env.storage().instance().has(&DataKey::MultiClique) {
+            panic_with_error!(&env, errors::PolicyError::AlreadyInitialized);
+        }
+        env.storage().instance().set(&DataKey::MultiClique, &multiclique_address);
+        env.storage().instance().set(&DataKey::Core, &core_address);
+        env.storage().instance().set(&DataKey::Votes, &votes_address);
+        env.storage().instance().set(&DataKey::Asset, &asset_address);
+    }
+
+    /// ## Set Spend Limit
+    ///
+    /// Sets the spend limit for a given token address (expects the soroban token interface).
+    ///
+    /// - `env`: Environment context.
+    /// - `address`: Target address.
+    /// - `limit`: Spend limit to set.
+    fn set_spend_limit(env: Env, address: Address, limit: i128) {
+        let contract_address: Address = env.storage().instance().get(&DataKey::MultiClique).unwrap();
+        contract_address.require_auth();
+        env.storage().instance().set(&DataKey::SpendLimit(address), &limit);
+    }
+
+    /// ## Reset Spend Limit
+    ///
+    /// Resets the spend limit for a given address to zero (expects the soroban token interface).
+    ///
+    /// - `env`: Environment context.
+    /// - `address`: Target address.
+    fn reset_spend_limit(env: Env, address: Address) {
+        let contract_address: Address = env.storage().instance().get(&DataKey::MultiClique).unwrap();
+        contract_address.require_auth();
+        env.storage().instance().set(&DataKey::AlreadySpend(address), &0_i128);
+    }
 }
 
 #[contractimpl]
@@ -73,53 +132,6 @@ impl MultiCliquePolicyTrait for Contract {
         if env.storage().instance().has(&DataKey::SpendLimit(address.clone())) {
             run_asset_policy(&env, &num_signers, address, &signers, &fn_name, &args)
         }
-    }
-}
-
-#[contractimpl]
-impl Contract {
-
-    /// ## Init
-    /// Initializes the contract by setting the addresses for MultiClique, Core, Votes, and Asset.
-    ///
-    /// - `env`: Environment context.
-    /// - `multiclique_address`: Address of the MultiClique protocol
-    /// - `core_address`: Address of the Elio DAO Core contract.
-    /// - `votes_address`: Address of the Elio DAO Votes contract.
-    /// - `asset_address`: Address of the Elio DAO Asset contract.
-    fn init(env: Env, multiclique_address: Address, core_address: Address, votes_address: Address, asset_address: Address) {
-        if env.storage().instance().has(&DataKey::MultiClique) {
-            panic_with_error!(&env, errors::PolicyError::AlreadyInitialized);
-        }
-        env.storage().instance().set(&DataKey::MultiClique, &multiclique_address);
-        env.storage().instance().set(&DataKey::Core, &core_address);
-        env.storage().instance().set(&DataKey::Votes, &votes_address);
-        env.storage().instance().set(&DataKey::Asset, &asset_address);
-    }
-
-    /// ## Set Spend Limit
-    ///
-    /// Sets the spend limit for a given token address (expects the soroban token interface).
-    ///
-    /// - `env`: Environment context.
-    /// - `address`: Target address.
-    /// - `limit`: Spend limit to set.
-    fn set_spend_limit(env: Env, address: Address, limit: i128) {
-        let contract_address: Address = env.storage().instance().get(&DataKey::MultiClique).unwrap();
-        contract_address.require_auth();
-        env.storage().instance().set(&DataKey::SpendLimit(address), &limit);
-    }
-
-    /// ## Reset Spend Limit
-    ///
-    /// Resets the spend limit for a given address to zero (expects the soroban token interface).
-    ///
-    /// - `env`: Environment context.
-    /// - `address`: Target address.
-    fn reset_spend_limit(env: Env, address: Address) {
-        let contract_address: Address = env.storage().instance().get(&DataKey::MultiClique).unwrap();
-        contract_address.require_auth();
-        env.storage().instance().set(&DataKey::AlreadySpend(address), &0_i128);
     }
 }
 
