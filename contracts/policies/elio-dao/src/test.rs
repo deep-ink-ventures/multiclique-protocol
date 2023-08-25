@@ -1,5 +1,6 @@
-use soroban_sdk::{Address, Env, testutils::Address as _, Val, vec, Symbol, Vec, BytesN};
+use soroban_sdk::{Address, Env, testutils::Address as _, Val, vec, Symbol, Vec, BytesN, IntoVal};
 use crate::{Contract, ContractClient};
+use crate::errors::PolicyError;
 
 struct Protocol {
     env: Env,
@@ -60,19 +61,61 @@ fn threshold() {
 
 #[test]
 fn core_threshold() {
-    let mut protocol = Protocol::new();
-    let client = &protocol.client;
-    let env = &protocol.env;
-    let protocol_address = &protocol.protocol_address;
-    let core_address = &protocol.core_address;
-    let votes_address = &protocol.votes_address;
-    let asset_address = &protocol.asset_address;
-    let multiclique_address = &protocol.multiclique_address;
+    let Protocol { env, client, signers, args, core_address, .. } = Protocol::new();
 
-    let num_signers = 3;
-    let signers = vec![&env, Address::random(&env).contract_id(), Address::random(&env).contract_id()];
-    let args: Vec<Val> = vec![&env];
+    let num_signers = 10;
     let threshold = client.get_threshold(&num_signers, &signers, &core_address, &Symbol::new(&env,"destroy_dao"), &args);
-    assert_eq!(threshold, 2);
+    assert_eq!(threshold, 8);
 
+    let threshold = client.get_threshold(&num_signers, &signers, &core_address, &Symbol::new(&env,"change_owner"), &args);
+    assert_eq!(threshold, 8);
+
+    let threshold = client.get_threshold(&num_signers, &signers, &core_address, &Symbol::new(&env,"something"), &args);
+    assert_eq!(threshold, 6);
+}
+
+#[test]
+fn votes_threshold() {
+    let Protocol { env, client, signers, args, votes_address, .. } = Protocol::new();
+
+    let num_signers = 10;
+    let threshold = client.get_threshold(&num_signers, &signers, &votes_address, &Symbol::new(&env,"fault_proposal"), &args);
+    assert_eq!(threshold, 1);
+
+    let threshold = client.get_threshold(&num_signers, &signers, &votes_address, &Symbol::new(&env,"mark_implemented"), &args);
+    assert_eq!(threshold, 5);
+
+    let threshold = client.get_threshold(&num_signers, &signers, &votes_address, &Symbol::new(&env,"something"), &args);
+    assert_eq!(threshold, 6);
+}
+
+#[test]
+fn assets_threshold() {
+    let Protocol { env, client, signers, args, asset_address, .. } = Protocol::new();
+
+    let num_signers = 10;
+    let threshold = client.get_threshold(&num_signers, &signers, &asset_address, &Symbol::new(&env,"set_owner"), &args);
+    assert_eq!(threshold, 8);
+
+    let threshold = client.get_threshold(&num_signers, &signers, &asset_address, &Symbol::new(&env,"set_core_address"), &args);
+    assert_eq!(threshold, 8);
+
+    let threshold = client.get_threshold(&num_signers, &signers, &asset_address, &Symbol::new(&env,"something"), &args);
+    assert_eq!(threshold, 5);
+}
+
+#[test]
+fn test_spend_limit() {
+    let Protocol { env, client, signers, args, asset_address, multiclique_address, .. } = Protocol::new();
+
+    let num_signers = 10;
+    client.set_spend_limit(&asset_address, &1000_i128);
+    let args = ((multiclique_address), (), 400_i128).into_val(&env);
+
+    client.run_policy(&num_signers, &signers, &asset_address, &Symbol::new(&env,"xfer"), &args);
+    client.run_policy(&num_signers, &signers, &asset_address, &Symbol::new(&env,"incr_allowance"), &args);
+    let result = client.try_run_policy(&num_signers, &signers, &asset_address, &Symbol::new(&env,"xfer"), &args);
+
+    assert!(result.is_err());
+    let x = 1;
 }
