@@ -1,5 +1,8 @@
 use soroban_sdk::{contracttype, symbol_short, Address, BytesN, Symbol, Vec};
 
+// Symbol representing the core contract init.
+pub const INIT: Symbol = symbol_short!("init");
+
 // Symbol representing signer-related events.
 pub const SIGNER: Symbol = symbol_short!("SIGNER");
 
@@ -17,6 +20,13 @@ pub const REMOVED: Symbol = symbol_short!("removed");
 
 // Symbol representing a changed event.
 pub const CHANGED: Symbol = symbol_short!("changed");
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct InitEvent {
+    pub threshold: u32,
+    pub signer: Vec<BytesN<32>>,
+}
 
 // Event data for when a signer is added.
 #[contracttype]

@@ -38,8 +38,7 @@ Elio DAO Policy utilizes different thresholds to govern the execution of various
 
 ### Spend Limit Policy
 
-- **Spend Limit Execution**: Requires 50% of the signers for transactions exceeding the defined spend limit.
-
+- **Spend Limit Execution**: DAOs can define a spend limit policy on their treasury on a per asset basis with their default threshold. Those send offs require only 50% of signers.
 ## Customizing Thresholds
 
 These thresholds are part of the preset but can be customized to fit specific needs. You can modify them within the code as per your governance model or specific requirements. Details on customization can be found within the code comments.

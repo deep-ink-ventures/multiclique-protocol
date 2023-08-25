@@ -21,4 +21,7 @@ pub enum MultiCliqueError {
 
     /// Occurs in `remove_signer` if an attempt is made to remove a signer that does not exist in the list of authorized signers.
     SignerDoesNotExist = 6,
+
+    /// Occurs in `init` if the contract has already been initialized.
+    AlreadyInitialized = 7,
 }
