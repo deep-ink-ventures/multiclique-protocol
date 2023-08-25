@@ -1,10 +1,8 @@
 use soroban_sdk::{Address, Env, testutils::Address as _, Val, vec, Symbol, Vec, BytesN, IntoVal};
 use crate::{Contract, ContractClient};
-use crate::errors::PolicyError;
 
 struct Protocol {
     env: Env,
-    protocol_address: Address,
     client: ContractClient<'static>,
 
     core_address: Address,
@@ -40,7 +38,6 @@ impl Protocol {
         Protocol {
             env,
             client,
-            protocol_address,
             core_address,
             votes_address,
             asset_address,
@@ -105,17 +102,44 @@ fn assets_threshold() {
 }
 
 #[test]
+#[should_panic(expected = "Error(Contract, #1)")]
 fn test_spend_limit() {
-    let Protocol { env, client, signers, args, asset_address, multiclique_address, .. } = Protocol::new();
+    let Protocol { env, client, signers, asset_address, multiclique_address, .. } = Protocol::new();
 
     let num_signers = 10;
     client.set_spend_limit(&asset_address, &1000_i128);
     let args = ((multiclique_address), (), 400_i128).into_val(&env);
 
-    client.run_policy(&num_signers, &signers, &asset_address, &Symbol::new(&env,"xfer"), &args);
-    client.run_policy(&num_signers, &signers, &asset_address, &Symbol::new(&env,"incr_allowance"), &args);
-    let result = client.try_run_policy(&num_signers, &signers, &asset_address, &Symbol::new(&env,"xfer"), &args);
+    assert_eq!(client.get_spend_limit(&asset_address), 1000_i128);
+    assert_eq!(client.get_already_spend(&asset_address), 0_i128);
 
-    assert!(result.is_err());
-    let x = 1;
+    client.run_policy(&num_signers, &signers, &asset_address, &Symbol::new(&env,"xfer"), &args);
+    assert_eq!(client.get_already_spend(&asset_address), 400_i128);
+    client.run_policy(&num_signers, &signers, &asset_address, &Symbol::new(&env,"incr_allowance"), &args);
+    assert_eq!(client.get_already_spend(&asset_address), 800_i128);
+
+    // exceeds limit!
+    client.run_policy(&num_signers, &signers, &asset_address, &Symbol::new(&env,"xfer"), &args);
+}
+
+
+#[test]
+fn test_reset_spend_limit() {
+    let Protocol { env, client, signers, asset_address, multiclique_address, .. } = Protocol::new();
+
+    let num_signers = 10;
+    client.set_spend_limit(&asset_address, &1000_i128);
+    let args = ((multiclique_address), (), 400_i128).into_val(&env);
+
+    assert_eq!(client.get_spend_limit(&asset_address), 1000_i128);
+    assert_eq!(client.get_already_spend(&asset_address), 0_i128);
+
+    client.run_policy(&num_signers, &signers, &asset_address, &Symbol::new(&env,"xfer"), &args);
+    assert_eq!(client.get_already_spend(&asset_address), 400_i128);
+
+    client.run_policy(&num_signers, &signers, &asset_address, &Symbol::new(&env,"incr_allowance"), &args);
+    assert_eq!(client.get_already_spend(&asset_address), 800_i128);
+
+    client.reset_spend_limit(&asset_address);
+    assert_eq!(client.get_already_spend(&asset_address), 0_i128);
 }

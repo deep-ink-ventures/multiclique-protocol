@@ -10,8 +10,6 @@ printf "> Compiling multiclique...\n"
 cargo build -p multiclique --target wasm32-unknown-unknown --profile "${PROFILE}" &&
 		cp "${DIR}"/target/wasm32-unknown-unknown/"${PROFILE}"/multiclique.wasm "${DIR}"/wasm/
 
-for POLICY in "elio-dao"; do
-	printf "> Compiling ${POLICY} policy...\n"
-	cargo build -p ${POLICY}-policy --target wasm32-unknown-unknown --profile "${PROFILE}" &&
-	  cp "${DIR}"/target/wasm32-unknown-unknown/"${PROFILE}"/${POLICY//-/_}_policy.wasm "${DIR}"/wasm/
-done
+printf "> Compiling elio-dao0policy...\n"
+cargo build -p elio-dao-policy --target wasm32-unknown-unknown --profile "${PROFILE}" &&
+	  cp "${DIR}"/target/wasm32-unknown-unknown/"${PROFILE}"/elio_dao_policy.wasm "${DIR}"/wasm/

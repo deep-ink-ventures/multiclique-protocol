@@ -1,7 +1,5 @@
 #![no_std]
 
-extern crate alloc;
-
 mod errors;
 
 #[cfg(test)]
@@ -29,19 +27,10 @@ enum DataKey {
     Votes,
     Asset,
     SpendLimit(Address),
-    AlreadySpend(Address)
+    AlreadySpend(Address),
 }
 
 trait ElioDaoPolicyTrait {
-   fn init(env: Env, multiclique_address: Address, core_address: Address, votes_address: Address, asset_address: Address);
-   fn set_spend_limit(env: Env, address: Address, limit: i128);
-   fn reset_spend_limit(env: Env, address: Address);
-}
-
-
-#[contractimpl]
-impl ElioDaoPolicyTrait for Contract {
-
     /// ## Init
     /// Initializes the contract by setting the addresses for MultiClique, Core, Votes, and Asset.
     ///
@@ -50,6 +39,46 @@ impl ElioDaoPolicyTrait for Contract {
     /// - `core_address`: Address of the Elio DAO Core contract.
     /// - `votes_address`: Address of the Elio DAO Votes contract.
     /// - `asset_address`: Address of the Elio DAO Asset contract.
+    fn init(env: Env, multiclique_address: Address, core_address: Address, votes_address: Address, asset_address: Address);
+
+    /// ## Set Spend Limit
+    ///
+    /// Sets the spend limit for a given token address (expects the soroban token interface).
+    ///
+    /// - `env`: Environment context.
+    /// - `address`: Target address.
+    /// - `limit`: Spend limit to set.
+    fn set_spend_limit(env: Env, address: Address, limit: i128);
+
+    /// ## Reset Spend Limit
+    ///
+    /// Resets the spend limit for a given address to zero (expects the soroban token interface).
+    ///
+    /// - `env`: Environment context.
+    /// - `address`: Target address.
+    fn reset_spend_limit(env: Env, address: Address);
+
+    /// ## Get Spend Limit
+    ///
+    /// Returns the spend limit for a given address.
+    ///
+    /// - `env`: Environment context.
+    /// - `address`: Target address.
+    fn get_spend_limit(env: Env, address: Address) -> i128;
+
+    /// ## Get Already Spend
+    ///
+    /// Returns the amount already spent for a given address.
+    ///
+    /// - `env`: Environment context.
+    /// - `address`: Target address.
+    fn get_already_spend(env: Env, address: Address) -> i128;
+}
+
+
+#[contractimpl]
+impl ElioDaoPolicyTrait for Contract {
+    // see: ElioDaoPolicyTrait
     fn init(env: Env, multiclique_address: Address, core_address: Address, votes_address: Address, asset_address: Address) {
         if env.storage().instance().has(&DataKey::MultiClique) {
             panic_with_error!(&env, errors::PolicyError::AlreadyInitialized);
@@ -60,35 +89,33 @@ impl ElioDaoPolicyTrait for Contract {
         env.storage().instance().set(&DataKey::Asset, &asset_address);
     }
 
-    /// ## Set Spend Limit
-    ///
-    /// Sets the spend limit for a given token address (expects the soroban token interface).
-    ///
-    /// - `env`: Environment context.
-    /// - `address`: Target address.
-    /// - `limit`: Spend limit to set.
+    // see: ElioDaoPolicyTrait
     fn set_spend_limit(env: Env, address: Address, limit: i128) {
         let contract_address: Address = env.storage().instance().get(&DataKey::MultiClique).unwrap();
         contract_address.require_auth();
         env.storage().instance().set(&DataKey::SpendLimit(address), &limit);
     }
 
-    /// ## Reset Spend Limit
-    ///
-    /// Resets the spend limit for a given address to zero (expects the soroban token interface).
-    ///
-    /// - `env`: Environment context.
-    /// - `address`: Target address.
+    // see: ElioDaoPolicyTrait
     fn reset_spend_limit(env: Env, address: Address) {
         let contract_address: Address = env.storage().instance().get(&DataKey::MultiClique).unwrap();
         contract_address.require_auth();
         env.storage().instance().set(&DataKey::AlreadySpend(address), &0_i128);
     }
+
+    // see: ElioDaoPolicyTrait
+    fn get_spend_limit(env: Env, address: Address) -> i128 {
+        env.storage().instance().get(&DataKey::SpendLimit(address)).unwrap_or(0_i128)
+    }
+
+    // see: ElioDaoPolicyTrait
+    fn get_already_spend(env: Env, address: Address) -> i128 {
+        env.storage().instance().get(&DataKey::AlreadySpend(address)).unwrap_or(0_i128)
+    }
 }
 
 #[contractimpl]
 impl MultiCliquePolicyTrait for Contract {
-
     /// ## Get Threshold
     ///
     /// Returns the threshold required for a particular action in the DAO.
@@ -101,7 +128,7 @@ impl MultiCliquePolicyTrait for Contract {
     /// - `args`: Additional arguments for the action.
     ///
     /// **Returns**: Threshold as a `u32`.
-    fn get_threshold(env: Env,  num_signers: u32, signers: Vec<BytesN<32>>, address: Address, fn_name: Symbol, args: Vec<Val>) -> u32 {
+    fn get_threshold(env: Env, num_signers: u32, signers: Vec<BytesN<32>>, address: Address, fn_name: Symbol, args: Vec<Val>) -> u32 {
         if num_signers < 2 {
             return 1;
         }
@@ -118,7 +145,7 @@ impl MultiCliquePolicyTrait for Contract {
         }
     }
 
-   /// ## Run Policy
+    /// ## Run Policy
     ///
     /// Executes the policy rules based on the given action and parameters.
     ///
@@ -146,8 +173,8 @@ impl MultiCliquePolicyTrait for Contract {
 /// - `args`: Additional arguments for the action.
 ///
 /// **Returns**: Threshold as a `u32`.
-fn get_core_threshold(env: &Env, num_signers: &u32, signers: &Vec<BytesN<32>>, fn_name: &Symbol, args: &Vec<Val>)  -> u32 {
-    if fn_name == &Symbol::new(&env,"destroy_dao") || fn_name == &Symbol::new(&env,"change_owner") {
+fn get_core_threshold(env: &Env, num_signers: &u32, _signers: &Vec<BytesN<32>>, fn_name: &Symbol, _args: &Vec<Val>) -> u32 {
+    if fn_name == &Symbol::new(&env, "destroy_dao") || fn_name == &Symbol::new(&env, "change_owner") {
         return (num_signers * 80) / 100;
     }
     (num_signers * 66) / 100
@@ -164,10 +191,10 @@ fn get_core_threshold(env: &Env, num_signers: &u32, signers: &Vec<BytesN<32>>, f
 /// - `args`: Additional arguments for the action.
 ///
 /// **Returns**: Threshold as a `u32`.
-fn get_votes_threshold(env: &Env, num_signers: &u32, signers: &Vec<BytesN<32>>, fn_name: &Symbol, args: &Vec<Val>)  -> u32 {
-    if fn_name == &Symbol::new(&env,"fault_proposal") {
+fn get_votes_threshold(env: &Env, num_signers: &u32, _signers: &Vec<BytesN<32>>, fn_name: &Symbol, _args: &Vec<Val>) -> u32 {
+    if fn_name == &Symbol::new(&env, "fault_proposal") {
         return 1;
-    } else if fn_name == &Symbol::new(&env,"mark_implemented") {
+    } else if fn_name == &Symbol::new(&env, "mark_implemented") {
         return (num_signers * 50) / 100;
     }
     (num_signers * 66) / 100
@@ -184,8 +211,8 @@ fn get_votes_threshold(env: &Env, num_signers: &u32, signers: &Vec<BytesN<32>>, 
 /// - `args`: Additional arguments for the action.
 ///
 /// **Returns**: Threshold as a `u32`.
-fn get_asset_threshold(env: &Env, num_signers: &u32, signers: &Vec<BytesN<32>>, fn_name: &Symbol, args: &Vec<Val>)  -> u32 {
-    if fn_name == &Symbol::new(&env,"set_owner") || fn_name == &Symbol::new(&env,"set_core_address") {
+fn get_asset_threshold(env: &Env, num_signers: &u32, _signers: &Vec<BytesN<32>>, fn_name: &Symbol, _args: &Vec<Val>) -> u32 {
+    if fn_name == &Symbol::new(&env, "set_owner") || fn_name == &Symbol::new(&env, "set_core_address") {
         return (num_signers * 80) / 100;
     }
     (num_signers * 50) / 100
@@ -201,7 +228,7 @@ fn get_asset_threshold(env: &Env, num_signers: &u32, signers: &Vec<BytesN<32>>, 
 /// - `signers`: List of signers' addresses.
 /// - `fn_name`: Function name representing the action.
 /// - `args`: Additional arguments for the action.
-fn run_asset_policy(env: &Env, num_signers: &u32, address: Address, signers: &Vec<BytesN<32>>, fn_name: &Symbol, args: &Vec<Val>)  {
+fn run_asset_policy(env: &Env, _num_signers: &u32, address: Address, _signers: &Vec<BytesN<32>>, fn_name: &Symbol, args: &Vec<Val>) {
     let contract_address: Address = env.storage().instance().get(&DataKey::MultiClique).unwrap();
 
     let is_xfer = fn_name == &Symbol::new(&env, "xfer");
@@ -213,8 +240,8 @@ fn run_asset_policy(env: &Env, num_signers: &u32, address: Address, signers: &Ve
         let amount: i128 = args.get(2).unwrap().try_into_val(env).unwrap();
 
         if from == contract_address {
-            let spend_limit = env.storage().instance().get(&DataKey::SpendLimit(address.clone())).unwrap_or(0_128);
-            let already_spend = env.storage().instance().get(&DataKey::AlreadySpend(address.clone())).unwrap_or(0_128);
+            let spend_limit = env.storage().instance().get(&DataKey::SpendLimit(address.clone())).unwrap_or(0_i128);
+            let already_spend = env.storage().instance().get(&DataKey::AlreadySpend(address.clone())).unwrap_or(0_i128);
 
             if already_spend + amount > spend_limit {
                 panic_with_error!(&env, errors::PolicyError::SpendLimitExceeded);
