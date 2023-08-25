@@ -4,7 +4,7 @@ use ed25519_dalek::{Keypair, Signer};
 use hex::decode;
 
 use soroban_sdk::testutils::{Address as _, BytesN as _, Events as _};
-use soroban_sdk::{vec, Address, BytesN, Env, IntoVal, Symbol, Val};
+use soroban_sdk::{vec, Address, BytesN, Env, IntoVal, Symbol, Val, Vec};
 use soroban_sdk::auth::{Context, ContractContext};
 
 use crate::{Contract, ContractClient, SignedMessage};
@@ -27,6 +27,7 @@ struct Protocol {
     env: Env,
     client: ContractClient<'static>,
     threshold: u32,
+    signers: Vec<BytesN<32>>,
 }
 
 impl Protocol {
@@ -59,8 +60,16 @@ impl Protocol {
             client,
             threshold,
             protocol_address,
+            signers
         }
     }
+}
+
+#[test]
+#[should_panic(expected = "#7")]
+fn init_only_once() {
+    let Protocol { client, signers, threshold, .. } = Protocol::new();
+    client.init(&signers, &threshold);
 }
 
 #[test]
@@ -108,9 +117,6 @@ fn test_default_threshold_met_but_wrong_signer() {
 
 }
 
-
-
-
 #[test]
 fn test_default_threshold_met() {
     let protocol = Protocol::new();
@@ -138,9 +144,10 @@ fn test_default_threshold_met() {
 #[test]
 fn test_default_threshold_set_on_init() {
     let Protocol {
-        client, threshold, ..
+        client, threshold, env, ..
     } = Protocol::new();
     assert_eq!(client.get_default_threshold(), threshold);
+    assert_eq!(env.events().all().len(), 1);
 }
 
 #[test]
@@ -151,7 +158,7 @@ fn test_add_signer() {
     let key = pair.public.to_bytes().into_val(&client.env);
     client.add_signer(&key);
     assert_eq!(client.get_signers().len(), 3);
-    assert_eq!(env.events().all().len(), 1);
+    assert_eq!(env.events().all().len(), 2);
 }
 
 #[test]
@@ -162,7 +169,7 @@ fn test_remove_signer() {
     let key = pair.public.to_bytes().into_val(&client.env);
     client.remove_signer(&key);
     assert_eq!(client.get_signers().len(), 1);
-    assert_eq!(env.events().all().len(), 1);
+    assert_eq!(env.events().all().len(), 2);
 }
 
 #[test]
@@ -172,7 +179,7 @@ fn test_remove_signer_fails_if_not_exists() {
     let pair = Keypair::from_bytes(&decode(EVE_SECRET).unwrap()).unwrap();
     let key = pair.public.to_bytes().into_val(&client.env);
     client.remove_signer(&key);
-    assert_eq!(env.events().all().len(), 1);
+    assert_eq!(env.events().all().len(), 2);
 }
 
 #[test]
@@ -183,7 +190,7 @@ fn test_attach_policy() {
     assert_eq!(client.get_policies(&context).len(), 0);
     client.attach_policy(&policy, &context);
     assert_eq!(client.get_policies(&context).len(), 1);
-    assert_eq!(env.events().all().len(), 1);
+    assert_eq!(env.events().all().len(), 2);
 }
 
 #[test]
@@ -207,7 +214,7 @@ fn test_detach_policy() {
     assert_eq!(client.get_policies(&context).len(), 1);
     client.detach_policy(&context);
     assert_eq!(client.get_policies(&context).len(), 0);
-    assert_eq!(env.events().all().len(), 2);
+    assert_eq!(env.events().all().len(), 3);
 }
 
 #[test]

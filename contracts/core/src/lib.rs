@@ -11,10 +11,7 @@ pub mod interface;
 mod test;
 
 use crate::errors::MultiCliqueError;
-use crate::events::{
-    DefaultThresholdChangedEventData, PolicyAddedEventData, PolicyRemovedEventData,
-    SignerAddedEventData, SignerRemovedEventData, ADDED, CHANGED, GOV, POLICY, REMOVED, SIGNER,
-};
+use crate::events::{DefaultThresholdChangedEventData, PolicyAddedEventData, PolicyRemovedEventData, SignerAddedEventData, SignerRemovedEventData, ADDED, CHANGED, GOV, POLICY, REMOVED, SIGNER, INIT, InitEvent};
 use crate::interface::MultiCliqueTrait;
 
 /// Declares the SignedMessage structure, containing the public key and signature.
@@ -44,12 +41,23 @@ pub struct Contract;
 #[contractimpl]
 impl MultiCliqueTrait for Contract {
     fn init(env: Env, signers: Vec<BytesN<32>>, default_threshold: u32) {
+        if env.storage().instance().has(&DataKey::Signers) {
+            panic_with_error!(&env, MultiCliqueError::AlreadyInitialized);
+        }
         env.storage().instance().set(&DataKey::Signers, &signers);
         env.storage()
             .instance()
             .set(&DataKey::DefaultThreshold, &default_threshold);
 
         env.storage().instance().bump(BUMP_A_YEAR);
+
+        env.events().publish(
+            (GOV, INIT),
+            InitEvent {
+                threshold: default_threshold,
+                signer: signers,
+            }
+        );
     }
 
     fn add_signer(env: Env, signer: BytesN<32>) {
