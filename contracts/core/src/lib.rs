@@ -77,7 +77,7 @@ impl MultiCliqueTrait for Contract {
         env.current_contract_address().require_auth();
         let mut signers: Vec<BytesN<32>> = env.storage().instance().get(&DataKey::Signers).unwrap();
 
-        if signers.last_index_of(&signer).is_some() {
+        if signers.contains(&signer) {
             panic_with_error!(&env, MultiCliqueError::SignerAlreadyAdded);
         }
 
