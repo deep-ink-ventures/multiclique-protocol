@@ -24,4 +24,10 @@ pub enum MultiCliqueError {
 
     /// Occurs in `init` if the contract has already been initialized.
     AlreadyInitialized = 7,
+
+    /// Occurs if the threshold exceeds the number of signers
+    InvalidThreshold = 8,
+
+    /// Occurs if a signer should be added multiple times
+    SignerAlreadyAdded = 9,
 }

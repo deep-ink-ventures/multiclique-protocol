@@ -1,4 +1,4 @@
-use soroban_sdk::{Address, Env, Symbol, Val, Vec, BytesN};
+use soroban_sdk::{Address, BytesN, Env, Symbol, Val, Vec};
 
 /// The `MultiCliquePolicyTrait` defines the interface for interacting with the MultiClique policy system.
 /// It provides methods to get the required signing threshold for executing a function and to run the policy
@@ -16,7 +16,14 @@ pub trait MultiCliquePolicyTrait {
     ///
     /// # Returns
     /// Returns the required number of signers (threshold) to execute the specified function.
-    fn get_threshold(env: Env, num_signers: u32, signers: Vec<BytesN<32>>, address: Address, fn_name: Symbol, args: Vec<Val>) -> u32;
+    fn get_threshold(
+        env: Env,
+        num_signers: u32,
+        signers: Vec<BytesN<32>>,
+        address: Address,
+        fn_name: Symbol,
+        args: Vec<Val>,
+    ) -> u32;
 
     /// Executes the policy logic for a given function call.
     ///
@@ -30,5 +37,12 @@ pub trait MultiCliquePolicyTrait {
     /// * `address`: The address of the contract that the function belongs to.
     /// * `fn_name`: The symbol representing the function name.
     /// * `args`: A vector of values representing the arguments for the function call.
-    fn run_policy(env: Env, num_signers: u32, signers: Vec<BytesN<32>>, address: Address, fn_name: Symbol, args: Vec<Val>);
+    fn run_policy(
+        env: Env,
+        num_signers: u32,
+        signers: Vec<BytesN<32>>,
+        address: Address,
+        fn_name: Symbol,
+        args: Vec<Val>,
+    );
 }

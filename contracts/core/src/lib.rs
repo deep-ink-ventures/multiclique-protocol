@@ -1,7 +1,10 @@
 #![no_std]
-use soroban_sdk::auth::Context;
-use soroban_sdk::{contract, contractimpl, contracttype, panic_with_error, Address, BytesN, Env, Vec, Symbol, Val};
+
 use commons::traits::MultiCliquePolicyTrait;
+use soroban_sdk::auth::Context;
+use soroban_sdk::{
+    contract, contractimpl, contracttype, panic_with_error, Address, BytesN, Env, Symbol, Val, Vec,
+};
 
 mod errors;
 mod events;
@@ -11,7 +14,11 @@ pub mod interface;
 mod test;
 
 use crate::errors::MultiCliqueError;
-use crate::events::{DefaultThresholdChangedEventData, PolicyAddedEventData, PolicyRemovedEventData, SignerAddedEventData, SignerRemovedEventData, ADDED, CHANGED, GOV, POLICY, REMOVED, SIGNER, INIT, InitEvent};
+use crate::events::{
+    DefaultThresholdChangedEventData, InitEvent, PolicyAddedEventData, PolicyRemovedEventData,
+    SignerAddedEventData, SignerRemovedEventData, ADDED, CHANGED, GOV, INIT, POLICY, REMOVED,
+    SIGNER,
+};
 use crate::interface::MultiCliqueTrait;
 
 /// Declares the SignedMessage structure, containing the public key and signature.
@@ -44,6 +51,12 @@ impl MultiCliqueTrait for Contract {
         if env.storage().instance().has(&DataKey::Signers) {
             panic_with_error!(&env, MultiCliqueError::AlreadyInitialized);
         }
+
+        let valid_thresholds = 0..signers.len() + 1;
+        if !valid_thresholds.contains(&default_threshold) {
+            panic_with_error!(&env, MultiCliqueError::InvalidThreshold);
+        }
+
         env.storage().instance().set(&DataKey::Signers, &signers);
         env.storage()
             .instance()
@@ -56,13 +69,17 @@ impl MultiCliqueTrait for Contract {
             InitEvent {
                 threshold: default_threshold,
                 signer: signers,
-            }
+            },
         );
     }
 
     fn add_signer(env: Env, signer: BytesN<32>) {
         env.current_contract_address().require_auth();
         let mut signers: Vec<BytesN<32>> = env.storage().instance().get(&DataKey::Signers).unwrap();
+
+        if signers.last_index_of(&signer).is_some() {
+            panic_with_error!(&env, MultiCliqueError::SignerAlreadyAdded);
+        }
 
         signers.push_back(signer.clone());
         env.storage().instance().set(&DataKey::Signers, &signers);
@@ -73,6 +90,15 @@ impl MultiCliqueTrait for Contract {
     fn remove_signer(env: Env, signer: BytesN<32>) {
         env.current_contract_address().require_auth();
         let mut signers: Vec<BytesN<32>> = env.storage().instance().get(&DataKey::Signers).unwrap();
+        let threshold = env
+            .storage()
+            .instance()
+            .get(&DataKey::DefaultThreshold)
+            .unwrap_or(0);
+
+        if signers.len() == threshold {
+            panic_with_error!(&env, MultiCliqueError::InvalidThreshold);
+        }
 
         match signers.first_index_of(&signer) {
             None => panic_with_error!(&env, MultiCliqueError::SignerDoesNotExist),
@@ -90,6 +116,14 @@ impl MultiCliqueTrait for Contract {
 
     fn set_default_threshold(env: Env, threshold: u32) {
         env.current_contract_address().require_auth();
+
+        let signers: Vec<BytesN<32>> = env.storage().instance().get(&DataKey::Signers).unwrap();
+        let valid_thresholds = 0..signers.len() + 1;
+
+        if !valid_thresholds.contains(&threshold) {
+            panic_with_error!(&env, MultiCliqueError::InvalidThreshold);
+        }
+
         env.storage()
             .instance()
             .set(&DataKey::DefaultThreshold, &threshold);
@@ -224,11 +258,25 @@ struct Policy;
 /// see `MultiCliquePolicyTrait` for documentation
 #[contractimpl]
 impl MultiCliquePolicyTrait for Policy {
-    fn get_threshold(_env: Env, num_signers: u32, _signers: Vec<BytesN<32>>, _address: Address, _fn_name: Symbol, _args: Vec<Val>) -> u32 {
+    fn get_threshold(
+        _env: Env,
+        num_signers: u32,
+        _signers: Vec<BytesN<32>>,
+        _address: Address,
+        _fn_name: Symbol,
+        _args: Vec<Val>,
+    ) -> u32 {
         num_signers
     }
 
-    fn run_policy(_env: Env, _num_signers: u32, _signers: Vec<BytesN<32>>, _address: Address, _fn_name: Symbol, _args: Vec<Val>) {
+    fn run_policy(
+        _env: Env,
+        _num_signers: u32,
+        _signers: Vec<BytesN<32>>,
+        _address: Address,
+        _fn_name: Symbol,
+        _args: Vec<Val>,
+    ) {
         // do nothing
     }
 }
