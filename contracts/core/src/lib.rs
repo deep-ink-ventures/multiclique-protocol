@@ -244,7 +244,6 @@ impl MultiCliqueTrait for Contract {
                         }
                     };
                 }
-                // todo: Policy for this?
                 Context::CreateContractHostFn(_) => (),
             }
         }
