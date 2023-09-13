@@ -24,8 +24,8 @@ soroban contract bump \
  --source "${SECRET_KEY}" \
  --rpc-url "${RPC_URL}" \
  --network-passphrase "${NETWORK_PASSPHRASE}" \
- --id $CORE_ADDRESS \
- --key-xdr AAAAFA== \
+ --id "$CORE_ADDRESS" \
+ --key-xdr "AAAAFA==" \
  --durability persistent \
  --ledgers-to-expire 6312000
 
@@ -42,7 +42,7 @@ soroban contract bump \
  --source "${SECRET_KEY}" \
  --rpc-url "${RPC_URL}" \
  --network-passphrase "${NETWORK_PASSPHRASE}" \
- --wasm wasm/elio_dao_policyl.wasm \
+ --wasm wasm/elio_dao_policy.wasm \
  --durability persistent \
  --ledgers-to-expire 6312000
 
@@ -50,8 +50,8 @@ soroban contract bump \
  --source "${SECRET_KEY}" \
  --rpc-url "${RPC_URL}" \
  --network-passphrase "${NETWORK_PASSPHRASE}" \
- --id $POLICY_ADDRESS \
- --key-xdr AAAAFA== \
+ --id "$POLICY_ADDRESS" \
+ --key-xdr "AAAAFA==" \
  --durability persistent \
  --ledgers-to-expire 6312000
 
@@ -75,3 +75,6 @@ soroban contract invoke \
     init \
     --default_threshold 1 \
     --signers  '["2fd30eab6f5a0f1a3cb83fa2cb70f0262cbc83beec84951c943f697b69463660", "f3bf772b0d713c62bb24b18074994be7dcbaa743ee013bddcf063931c16c2f10"]'
+
+printf "CORE_ADDRESS=%s\n" "$CORE_ADDRESS"
+printf "POLICY_ADDRESS=%s\n" "$POLICY_ADDRESS"
