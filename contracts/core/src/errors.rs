@@ -10,6 +10,9 @@ pub enum MultiCliqueError {
     /// Occurs in `detach_policy` when a policy does not exist for the given context.
     ContractPolicyDoesNotExist = 1,
 
+    /// Occurs if the maximum supported number of signers has been reached
+    SignerLimitExceeded = 2,
+
     /// Occurs in `__check_auth` when a public key in the signed messages is not found among the authorized signers.
     UnknownSigner = 3,
 

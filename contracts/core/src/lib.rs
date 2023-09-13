@@ -1,5 +1,6 @@
 #![no_std]
 
+use core::cmp::min;
 use commons::traits::MultiCliquePolicyTrait;
 use soroban_sdk::auth::Context;
 use soroban_sdk::{
@@ -40,6 +41,7 @@ enum DataKey {
 }
 
 pub const BUMP_A_YEAR: u32 = 6312000;
+pub const THRESHOLD_LIMIT: u32 = 16;
 
 #[contract]
 pub struct Contract;
@@ -50,6 +52,10 @@ impl MultiCliqueTrait for Contract {
     fn init(env: Env, signers: Vec<BytesN<32>>, default_threshold: u32) {
         if env.storage().instance().has(&DataKey::Signers) {
             panic_with_error!(&env, MultiCliqueError::AlreadyInitialized);
+        }
+
+        if signers.len() > THRESHOLD_LIMIT {
+            panic_with_error!(&env, MultiCliqueError::SignerLimitExceeded);
         }
 
         let valid_thresholds = 0..signers.len() + 1;
@@ -79,6 +85,10 @@ impl MultiCliqueTrait for Contract {
 
         if signers.contains(&signer) {
             panic_with_error!(&env, MultiCliqueError::SignerAlreadyAdded);
+        }
+
+        if signers.len() == THRESHOLD_LIMIT {
+            panic_with_error!(&env, MultiCliqueError::SignerLimitExceeded);
         }
 
         signers.push_back(signer.clone());
@@ -118,7 +128,7 @@ impl MultiCliqueTrait for Contract {
         env.current_contract_address().require_auth();
 
         let signers: Vec<BytesN<32>> = env.storage().instance().get(&DataKey::Signers).unwrap();
-        let valid_thresholds = 0..signers.len() + 1;
+        let valid_thresholds = 0..min(signers.len() + 1, THRESHOLD_LIMIT + 1);
 
         if !valid_thresholds.contains(&threshold) {
             panic_with_error!(&env, MultiCliqueError::InvalidThreshold);

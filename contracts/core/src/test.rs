@@ -1,6 +1,7 @@
 #![cfg(test)]
 
 use ed25519_dalek::{Keypair, Signer};
+use rand::rngs::OsRng;
 use hex::decode;
 
 use soroban_sdk::auth::{Context, ContractContext};
@@ -267,6 +268,19 @@ fn test_invalid_threshold_on_init_fails() {
 fn test_invalid_threshold_on_update_fails() {
     let Protocol { client, .. } = Protocol::new(2);
     client.set_default_threshold(&10);
+}
+
+#[test]
+#[should_panic(expected = "#2")]
+fn test_exceeding_signer_limit_on_update_fails() {
+    let Protocol { client, env, .. } = Protocol::new(2);
+    let mut csprng = OsRng{};
+
+    for _ in 0..15 {
+        let keypair: Keypair = Keypair::generate(&mut csprng);
+        let bytes = keypair.public.to_bytes().into_val(&env);
+        client.add_signer(&bytes);
+    }
 }
 
 #[test]
