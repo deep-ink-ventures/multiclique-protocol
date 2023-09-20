@@ -18,7 +18,7 @@ soroban contract bump \
  --network-passphrase "${NETWORK_PASSPHRASE}" \
  --wasm wasm/multiclique.wasm \
  --durability persistent \
- --ledgers-to-expire 6312000
+ --ledgers-to-expire 2000000
 
 soroban contract bump \
  --source "${SECRET_KEY}" \
@@ -27,7 +27,7 @@ soroban contract bump \
  --id "$CORE_ADDRESS" \
  --key-xdr "AAAAFA==" \
  --durability persistent \
- --ledgers-to-expire 6312000
+ --ledgers-to-expire 2000000
 
 POLICY_ADDRESS="$(
 soroban contract deploy \
@@ -44,7 +44,7 @@ soroban contract bump \
  --network-passphrase "${NETWORK_PASSPHRASE}" \
  --wasm wasm/elio_dao_policy.wasm \
  --durability persistent \
- --ledgers-to-expire 6312000
+ --ledgers-to-expire 2000000
 
 soroban contract bump \
  --source "${SECRET_KEY}" \
@@ -53,7 +53,7 @@ soroban contract bump \
  --id "$POLICY_ADDRESS" \
  --key-xdr "AAAAFA==" \
  --durability persistent \
- --ledgers-to-expire 6312000
+ --ledgers-to-expire 2000000
 
 # signer 1 (test purposes only)
 #GAGB4TVOQWTLK5Y4AVZNKQVOMU2RBTD42MOYROMNV3E64Y6O6LLPYUB2
@@ -74,7 +74,7 @@ soroban contract invoke \
     -- \
     init \
     --default_threshold 1 \
-    --signers  '["2fd30eab6f5a0f1a3cb83fa2cb70f0262cbc83beec84951c943f697b69463660", "f3bf772b0d713c62bb24b18074994be7dcbaa743ee013bddcf063931c16c2f10"]'
+    --signers  '["0c1e4eae85a6b5771c0572d542ae653510cc7cd31d88b98daec9ee63cef2d6fc", "1f76d933854bbb2de23ed48d0eaac0d95cc78a49decaf4d77fac057b2e255f97"]'
 
 printf "CORE_ADDRESS=%s\n" "$CORE_ADDRESS"
 printf "POLICY_ADDRESS=%s\n" "$POLICY_ADDRESS"
