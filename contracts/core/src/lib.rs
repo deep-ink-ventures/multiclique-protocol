@@ -68,8 +68,6 @@ impl MultiCliqueTrait for Contract {
             .instance()
             .set(&DataKey::DefaultThreshold, &default_threshold);
 
-        env.storage().instance().bump(BUMP_A_YEAR);
-
         env.events().publish(
             (GOV, INIT),
             InitEvent {
