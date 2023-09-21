@@ -18,10 +18,6 @@ use soroban_sdk::{
 #[contract]
 pub struct Contract;
 
-/// # Contract
-///
-/// This contract defines the behavior and rules for managing a multi-clique policy in a DAO.
-/// It includes functions for setting thresholds, initializing the contract, and managing asset policies.
 #[contracttype]
 #[derive(Clone)]
 enum DataKey {
