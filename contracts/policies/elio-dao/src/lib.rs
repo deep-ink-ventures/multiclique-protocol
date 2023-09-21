@@ -167,20 +167,20 @@ impl MultiCliquePolicyTrait for Contract {
         if num_signers < 2 {
             return 1;
         }
-        if address == env.storage().instance().get(&DataKey::Core).unwrap() {
-            get_core_threshold(&env, &num_signers, &signers, &fn_name, &args)
-        } else if address == env.storage().instance().get(&DataKey::Votes).unwrap() {
-            get_votes_threshold(&env, &num_signers, &signers, &fn_name, &args)
-        } else if address == env.storage().instance().get(&DataKey::Asset).unwrap() {
-            get_asset_threshold(&env, &num_signers, &signers, &fn_name, &args)
-        } else if env
-            .storage()
-            .instance()
-            .has(&DataKey::SpendLimit(address.clone()))
-        {
-            (num_signers * 50) / 100
-        } else {
-            num_signers
+        match address {
+            addr if addr == env.storage().instance().get(&DataKey::Core).unwrap() => {
+                get_core_threshold(&env, &num_signers, &signers, &fn_name, &args)
+            }
+            addr if addr == env.storage().instance().get(&DataKey::Votes).unwrap() => {
+                get_votes_threshold(&env, &num_signers, &signers, &fn_name, &args)
+            }
+            addr if addr == env.storage().instance().get(&DataKey::Asset).unwrap() => {
+                get_asset_threshold(&env, &num_signers, &signers, &fn_name, &args)
+            }
+            _ if env.storage().instance().has(&DataKey::SpendLimit(address.clone())) => {
+                (num_signers * 50) / 100
+            }
+            _ => num_signers,
         }
     }
 
