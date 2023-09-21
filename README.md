@@ -85,8 +85,6 @@ commons = { workspace = true}
 
 [dev_dependencies]
 soroban-sdk = { workspace = true, features = ["testutils"] }
-ed25519-dalek = { version = "1.0.1" }
-rand = { version = "0.7.3" }
 
 [features]
 testutils = ["soroban-sdk/testutils"]
