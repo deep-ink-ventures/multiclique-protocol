@@ -196,7 +196,7 @@ fn assets_threshold() {
 }
 
 #[test]
-#[should_panic(expected = "Error(Contract, #1)")]
+#[should_panic(expected = "Error(Contract, #1101)")]
 fn test_spend_limit() {
     let Protocol {
         env,

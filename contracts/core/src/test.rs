@@ -69,7 +69,7 @@ impl Protocol {
 }
 
 #[test]
-#[should_panic(expected = "#7")]
+#[should_panic(expected = "#1007")]
 fn init_only_once() {
     let Protocol {
         client,
@@ -205,7 +205,7 @@ fn test_remove_signer() {
 }
 
 #[test]
-#[should_panic(expected = "#6")]
+#[should_panic(expected = "#1006")]
 fn test_remove_signer_fails_if_not_exists() {
     let Protocol { client, env, .. } = Protocol::new(1);
     let pair = Keypair::from_bytes(&decode(EVE_SECRET).unwrap()).unwrap();
@@ -226,7 +226,7 @@ fn test_attach_policy() {
 }
 
 #[test]
-#[should_panic(expected = "#0")]
+#[should_panic(expected = "#1000")]
 fn test_attach_policy_fails_if_already_exists() {
     let Protocol { client, env, .. } = Protocol::new(2);
     let policy = Address::random(&env);
@@ -250,7 +250,7 @@ fn test_detach_policy() {
 }
 
 #[test]
-#[should_panic(expected = "#1")]
+#[should_panic(expected = "#1001")]
 fn test_detach_policy_fails_if_not_exists() {
     let Protocol { client, env, .. } = Protocol::new(2);
     let context = vec![&env, Address::random(&env)];
@@ -258,20 +258,20 @@ fn test_detach_policy_fails_if_not_exists() {
 }
 
 #[test]
-#[should_panic(expected = "#8")]
+#[should_panic(expected = "#1008")]
 fn test_invalid_threshold_on_init_fails() {
     Protocol::new(10);
 }
 
 #[test]
-#[should_panic(expected = "#8")]
+#[should_panic(expected = "#1008")]
 fn test_invalid_threshold_on_update_fails() {
     let Protocol { client, .. } = Protocol::new(2);
     client.set_default_threshold(&10);
 }
 
 #[test]
-#[should_panic(expected = "#2")]
+#[should_panic(expected = "#1002")]
 fn test_exceeding_signer_limit_on_update_fails() {
     let Protocol { client, env, .. } = Protocol::new(2);
     let mut csprng = OsRng{};
@@ -284,7 +284,7 @@ fn test_exceeding_signer_limit_on_update_fails() {
 }
 
 #[test]
-#[should_panic(expected = "#9")]
+#[should_panic(expected = "#1009")]
 fn test_signers_cannot_be_added_multiple_times() {
     let Protocol { client, env, .. } = Protocol::new(2);
     let candidate = Keypair::from_bytes(&decode(ALICE_SECRET).unwrap())
@@ -296,7 +296,7 @@ fn test_signers_cannot_be_added_multiple_times() {
 }
 
 #[test]
-#[should_panic(expected = "#8")]
+#[should_panic(expected = "#1008")]
 fn test_signers_cannot_be_removed_if_threshold_not_reduced() {
     let Protocol { client, env, .. } = Protocol::new(2);
     let candidate = Keypair::from_bytes(&decode(ALICE_SECRET).unwrap())

@@ -6,8 +6,8 @@ use soroban_sdk::contracterror;
 pub enum PolicyError {
     /// Error when the contract is already initialized.
     /// May occur in `init` function.
-    AlreadyInitialized = 0,
+    AlreadyInitialized = 1100,
     /// Error when the spend limit is exceeded.
     /// May occur in `run_asset_policy` function.
-    SpendLimitExceeded = 1,
+    SpendLimitExceeded = 1101,
 }
