@@ -1,6 +1,5 @@
 use crate::{Contract, ContractClient};
-use soroban_sdk::{testutils::Address as _, vec, Address, BytesN, Env, IntoVal, Symbol, Val, Vec};
-
+use soroban_sdk::{testutils::Address as _, testutils::Events as _, vec, Address, BytesN, Env, IntoVal, Symbol, Val, Vec};
 struct Protocol {
     env: Env,
     client: ContractClient<'static>,
@@ -198,6 +197,7 @@ fn assets_threshold() {
 #[test]
 #[should_panic(expected = "Error(Contract, #1101)")]
 fn test_spend_limit() {
+    let num_signers = 10;
     let Protocol {
         env,
         client,
@@ -206,11 +206,11 @@ fn test_spend_limit() {
         multiclique_address,
         ..
     } = Protocol::new();
-
-    let num_signers = 10;
-    client.set_spend_limit(&asset_address, &1000_i128);
     let args = ((multiclique_address), (), 400_i128).into_val(&env);
+    assert_eq!(env.events().all().len(), 1);
 
+    client.set_spend_limit(&asset_address, &1000_i128);
+    assert_eq!(env.events().all().len(), 2);
     assert_eq!(client.get_spend_limit(&asset_address), 1000_i128);
     assert_eq!(client.get_already_spend(&asset_address), 0_i128);
 
@@ -230,7 +230,7 @@ fn test_spend_limit() {
         &args,
     );
     assert_eq!(client.get_already_spend(&asset_address), 800_i128);
-
+    assert_eq!(env.events().all().len(), 4);
     // exceeds limit!
     client.run_policy(
         &num_signers,
@@ -251,9 +251,10 @@ fn test_reset_spend_limit() {
         multiclique_address,
         ..
     } = Protocol::new();
-
+    assert_eq!(env.events().all().len(), 1);
     let num_signers = 10;
     client.set_spend_limit(&asset_address, &1000_i128);
+    assert_eq!(env.events().all().len(), 2);
     let args = ((multiclique_address), (), 400_i128).into_val(&env);
 
     assert_eq!(client.get_spend_limit(&asset_address), 1000_i128);
@@ -279,4 +280,5 @@ fn test_reset_spend_limit() {
 
     client.reset_spend_limit(&asset_address);
     assert_eq!(client.get_already_spend(&asset_address), 0_i128);
+    assert_eq!(env.events().all().len(), 5);
 }

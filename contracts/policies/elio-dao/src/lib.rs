@@ -2,9 +2,15 @@
 
 mod errors;
 
+mod events;
 #[cfg(test)]
 mod test;
 
+use crate::events::{
+    PolicyAlreadySpendUpdateEventData, PolicyInitEventData, PolicySpendLimitResetEventData,
+    PolicySpendLimitSetEventData, ALREADY_SPENT_UPDATE, INIT, POLICY, SPEND_LIMIT_RESET,
+    SPEND_LIMIT_SET,
+};
 use commons::traits::MultiCliquePolicyTrait;
 use soroban_sdk::{
     contract, contractimpl, contracttype, panic_with_error, Address, BytesN, Env, Symbol,
@@ -103,6 +109,16 @@ impl ElioDaoPolicyTrait for Contract {
         env.storage()
             .instance()
             .set(&DataKey::Asset, &asset_address);
+
+        env.events().publish(
+            (POLICY, INIT),
+            PolicyInitEventData {
+                multiclique_address,
+                core_address,
+                votes_address,
+                asset_address,
+            },
+        );
     }
 
     // see: ElioDaoPolicyTrait
@@ -112,7 +128,12 @@ impl ElioDaoPolicyTrait for Contract {
         contract_address.require_auth();
         env.storage()
             .instance()
-            .set(&DataKey::SpendLimit(address), &limit);
+            .set(&DataKey::SpendLimit(address.clone()), &limit);
+
+        env.events().publish(
+            (POLICY, SPEND_LIMIT_SET),
+            PolicySpendLimitSetEventData { address, limit },
+        );
     }
 
     // see: ElioDaoPolicyTrait
@@ -122,7 +143,12 @@ impl ElioDaoPolicyTrait for Contract {
         contract_address.require_auth();
         env.storage()
             .instance()
-            .set(&DataKey::AlreadySpend(address), &0_i128);
+            .set(&DataKey::AlreadySpend(address.clone()), &0_i128);
+
+        env.events().publish(
+            (POLICY, SPEND_LIMIT_RESET),
+            PolicySpendLimitResetEventData { address },
+        );
     }
 
     // see: ElioDaoPolicyTrait
@@ -177,7 +203,11 @@ impl MultiCliquePolicyTrait for Contract {
             addr if addr == env.storage().instance().get(&DataKey::Asset).unwrap() => {
                 get_asset_threshold(&env, &num_signers, &signers, &fn_name, &args)
             }
-            _ if env.storage().instance().has(&DataKey::SpendLimit(address.clone())) => {
+            _ if env
+                .storage()
+                .instance()
+                .has(&DataKey::SpendLimit(address.clone())) =>
+            {
                 (num_signers * 50) / 100
             }
             _ => num_signers,
@@ -326,14 +356,23 @@ fn run_asset_policy(
                 .storage()
                 .instance()
                 .get(&DataKey::AlreadySpend(address.clone()))
-                .unwrap_or(0_i128);
+                .unwrap_or(0_i128)
+                + amount;
 
-            if already_spend + amount > spend_limit {
+            if already_spend > spend_limit {
                 panic_with_error!(&env, errors::PolicyError::SpendLimitExceeded);
             }
             env.storage()
                 .instance()
-                .set(&DataKey::AlreadySpend(address), &(already_spend + amount));
+                .set(&DataKey::AlreadySpend(address.clone()), &already_spend);
+
+            env.events().publish(
+                (POLICY, ALREADY_SPENT_UPDATE),
+                PolicyAlreadySpendUpdateEventData {
+                    address,
+                    already_spend,
+                },
+            );
         }
     }
 }

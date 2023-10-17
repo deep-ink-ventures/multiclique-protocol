@@ -1,7 +1,7 @@
 #![no_std]
 
-use core::cmp::min;
 use commons::traits::MultiCliquePolicyTrait;
+use core::cmp::min;
 use soroban_sdk::auth::Context;
 use soroban_sdk::{
     contract, contractimpl, contracttype, panic_with_error, Address, BytesN, Env, Symbol, Val, Vec,
@@ -16,7 +16,7 @@ mod test;
 
 use crate::errors::MultiCliqueError;
 use crate::events::{
-    DefaultThresholdChangedEventData, InitEvent, PolicyAddedEventData, PolicyRemovedEventData,
+    DefaultThresholdChangedEventData, InitEventData, PolicyAddedEventData, PolicyRemovedEventData,
     SignerAddedEventData, SignerRemovedEventData, ADDED, CHANGED, GOV, INIT, POLICY, REMOVED,
     SIGNER,
 };
@@ -70,9 +70,9 @@ impl MultiCliqueTrait for Contract {
 
         env.events().publish(
             (GOV, INIT),
-            InitEvent {
+            InitEventData {
                 threshold: default_threshold,
-                signer: signers,
+                signers,
             },
         );
     }

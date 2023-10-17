@@ -49,5 +49,5 @@ curl -XPATCH -H "Config-Secret: ${CONFIG_SECRET}" -H "Content-type: application/
 }" "${SERVICE_URL}/update-config/"
 fi
 
-printf "MULTICLIQUE_WASM_HASH=%s\n" "$MULTICLIQUE_WASM_HASH"
-printf "POLICY_WASM_HASH=%s\n" "$POLICY_WASM_HASH"
+printf "\nMULTICLIQUE_WASM_HASH=%s" "$MULTICLIQUE_WASM_HASH"
+printf "\nPOLICY_WASM_HASH=%s\n" "$POLICY_WASM_HASH"

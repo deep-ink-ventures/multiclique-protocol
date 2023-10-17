@@ -23,9 +23,9 @@ pub const CHANGED: Symbol = symbol_short!("changed");
 
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct InitEvent {
+pub struct InitEventData {
     pub threshold: u32,
-    pub signer: Vec<BytesN<32>>,
+    pub signers: Vec<BytesN<32>>,
 }
 
 // Event data for when a signer is added.
