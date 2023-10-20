@@ -7,7 +7,7 @@ mod events;
 mod test;
 
 use crate::events::{
-    PolicyAlreadySpendUpdateEventData, PolicyInitEventData, PolicySpendLimitResetEventData,
+    PolicyAlreadySpentUpdateEventData, PolicyInitEventData, PolicySpendLimitResetEventData,
     PolicySpendLimitSetEventData, ALREADY_SPENT_UPDATE, INIT, POLICY, SPEND_LIMIT_RESET,
     SPEND_LIMIT_SET,
 };
@@ -32,7 +32,7 @@ enum DataKey {
     Votes,
     Asset,
     SpendLimit(Address),
-    AlreadySpend(Address),
+    AlreadySpent(Address),
 }
 
 trait ElioDaoPolicyTrait {
@@ -83,7 +83,7 @@ trait ElioDaoPolicyTrait {
     ///
     /// - `env`: Environment context.
     /// - `address`: Target address.
-    fn get_already_spend(env: Env, address: Address) -> i128;
+    fn get_already_spent(env: Env, address: Address) -> i128;
 }
 
 #[contractimpl]
@@ -143,7 +143,7 @@ impl ElioDaoPolicyTrait for Contract {
         contract_address.require_auth();
         env.storage()
             .instance()
-            .set(&DataKey::AlreadySpend(address.clone()), &0_i128);
+            .set(&DataKey::AlreadySpent(address.clone()), &0_i128);
 
         env.events().publish(
             (POLICY, SPEND_LIMIT_RESET),
@@ -160,10 +160,10 @@ impl ElioDaoPolicyTrait for Contract {
     }
 
     // see: ElioDaoPolicyTrait
-    fn get_already_spend(env: Env, address: Address) -> i128 {
+    fn get_already_spent(env: Env, address: Address) -> i128 {
         env.storage()
             .instance()
-            .get(&DataKey::AlreadySpend(address))
+            .get(&DataKey::AlreadySpent(address))
             .unwrap_or(0_i128)
     }
 }
@@ -352,25 +352,25 @@ fn run_asset_policy(
                 .instance()
                 .get(&DataKey::SpendLimit(address.clone()))
                 .unwrap_or(0_i128);
-            let already_spend = env
+            let already_spent = env
                 .storage()
                 .instance()
-                .get(&DataKey::AlreadySpend(address.clone()))
+                .get(&DataKey::AlreadySpent(address.clone()))
                 .unwrap_or(0_i128)
                 + amount;
 
-            if already_spend > spend_limit {
+            if already_spent > spend_limit {
                 panic_with_error!(&env, errors::PolicyError::SpendLimitExceeded);
             }
             env.storage()
                 .instance()
-                .set(&DataKey::AlreadySpend(address.clone()), &already_spend);
+                .set(&DataKey::AlreadySpent(address.clone()), &already_spent);
 
             env.events().publish(
                 (POLICY, ALREADY_SPENT_UPDATE),
-                PolicyAlreadySpendUpdateEventData {
+                PolicyAlreadySpentUpdateEventData {
                     address,
-                    already_spend,
+                    already_spent,
                 },
             );
         }

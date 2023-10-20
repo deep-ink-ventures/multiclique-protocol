@@ -212,7 +212,7 @@ fn test_spend_limit() {
     client.set_spend_limit(&asset_address, &1000_i128);
     assert_eq!(env.events().all().len(), 2);
     assert_eq!(client.get_spend_limit(&asset_address), 1000_i128);
-    assert_eq!(client.get_already_spend(&asset_address), 0_i128);
+    assert_eq!(client.get_already_spent(&asset_address), 0_i128);
 
     client.run_policy(
         &num_signers,
@@ -221,7 +221,7 @@ fn test_spend_limit() {
         &Symbol::new(&env, "xfer"),
         &args,
     );
-    assert_eq!(client.get_already_spend(&asset_address), 400_i128);
+    assert_eq!(client.get_already_spent(&asset_address), 400_i128);
     client.run_policy(
         &num_signers,
         &signers,
@@ -229,7 +229,7 @@ fn test_spend_limit() {
         &Symbol::new(&env, "incr_allowance"),
         &args,
     );
-    assert_eq!(client.get_already_spend(&asset_address), 800_i128);
+    assert_eq!(client.get_already_spent(&asset_address), 800_i128);
     assert_eq!(env.events().all().len(), 4);
     // exceeds limit!
     client.run_policy(
@@ -258,7 +258,7 @@ fn test_reset_spend_limit() {
     let args = ((multiclique_address), (), 400_i128).into_val(&env);
 
     assert_eq!(client.get_spend_limit(&asset_address), 1000_i128);
-    assert_eq!(client.get_already_spend(&asset_address), 0_i128);
+    assert_eq!(client.get_already_spent(&asset_address), 0_i128);
 
     client.run_policy(
         &num_signers,
@@ -267,7 +267,7 @@ fn test_reset_spend_limit() {
         &Symbol::new(&env, "xfer"),
         &args,
     );
-    assert_eq!(client.get_already_spend(&asset_address), 400_i128);
+    assert_eq!(client.get_already_spent(&asset_address), 400_i128);
 
     client.run_policy(
         &num_signers,
@@ -276,9 +276,9 @@ fn test_reset_spend_limit() {
         &Symbol::new(&env, "incr_allowance"),
         &args,
     );
-    assert_eq!(client.get_already_spend(&asset_address), 800_i128);
+    assert_eq!(client.get_already_spent(&asset_address), 800_i128);
 
     client.reset_spend_limit(&asset_address);
-    assert_eq!(client.get_already_spend(&asset_address), 0_i128);
+    assert_eq!(client.get_already_spent(&asset_address), 0_i128);
     assert_eq!(env.events().all().len(), 5);
 }

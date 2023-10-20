@@ -25,7 +25,7 @@ pub struct PolicyInitEventData {
     pub asset_address: Address,
 }
 
-// Event data for when a policy contract is initiated
+// Event data for when a spend limit is set
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct PolicySpendLimitSetEventData {
@@ -33,17 +33,17 @@ pub struct PolicySpendLimitSetEventData {
     pub limit: i128,
 }
 
-// Event data for when a policy contract is initiated
+// Event data for when a spend limit is reset
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct PolicySpendLimitResetEventData {
     pub address: Address,
 }
 
-// Event data for when a policy contract is initiated
+// Event data for when an already_spent amount is updated
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct PolicyAlreadySpendUpdateEventData {
+pub struct PolicyAlreadySpentUpdateEventData {
     pub address: Address,
-    pub already_spend: i128,
+    pub already_spent: i128,
 }
